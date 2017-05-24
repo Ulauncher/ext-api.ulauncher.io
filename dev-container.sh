@@ -2,9 +2,11 @@
 
 docker run \
     -v $(pwd):/var/task \
+    -v $(pwd)/.bashrc:/root/.bashrc \
+    -v $HOME/.bash_history:/root/.bash_history \
     -p 8080:8080 \
     -it \
     --rm \
     --env-file .env \
-    mcrowson/zappa-builder \
-    bash -c "virtualenv docker_env && source docker_env/bin/activate && pip install -r requirements.txt && bash"
+    ulauncher/ext-api-zappa \
+    bash
