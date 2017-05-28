@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+cd `dirname $0`
+cd ..
+
 docker run \
     -v $(pwd):/var/task \
     -v $(pwd)/.bashrc:/root/.bashrc \
@@ -8,5 +12,5 @@ docker run \
     -it \
     --rm \
     --env-file .env \
-    ulauncher/ext-api-zappa \
+    ulauncher/ext-api \
     bash
