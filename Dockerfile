@@ -4,4 +4,7 @@ MAINTAINER Aleksandr Gornostal <sanya.gornostal@gmail.com>
 
 WORKDIR /var/task
 
-RUN pip install virtualenv
+COPY [ "requirements-dev.txt", "requirements.txt", "./" ]
+
+RUN pip install -r requirements-dev.txt && \
+    pip install -r requirements.txt

@@ -12,5 +12,6 @@ docker run \
     -it \
     --rm \
     --env-file .env \
+    --name ext-api \
     ulauncher/ext-api \
     bash

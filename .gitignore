@@ -3,3 +3,4 @@ __pycache__
 .env
 docker_env/
 remote_env.json
+.cache

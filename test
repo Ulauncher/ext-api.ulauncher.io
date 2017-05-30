@@ -1,0 +1,5 @@
+#!/bin/bash
+
+args=$(echo $@ | sed 's|/.*tests|tests|g')
+
+eval "PYTHONPATH=`pwd` py.test --pep8 $args"
