@@ -7,7 +7,7 @@ def get_project_path(github_url):
     match = re.match(r'^http(s)?:\/\/github.com\/([\w-]+\/[\w-]+)(\/)?$',
                      github_url, re.I)
     if not match:
-        raise InvalidGithubUrlError(github_url)
+        raise InvalidGithubUrlError('Invalid GithubUrl: %s' % github_url)
 
     return match.group(2)
 
