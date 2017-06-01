@@ -34,7 +34,7 @@ def bottle_auth_plugin(callback):
             except AuthError as e:
                 response.content_type = 'application/json'
                 response.status = 401
-                return {'message': 'Unauthorized. %s' % e}
+                return {'error': 'Unauthorized. %s' % e}
 
             request['REMOTE_USER'] = decoded['sub']
 
