@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 response.content_type = 'application/json'
-docs_exclude = ["/api-doc"]
+docs_exclude = ["/api-doc.html"]
 
 
 @app.route('/api-doc.html', method=['GET'])
@@ -34,10 +34,13 @@ def api_doc():
 @jwt_auth_required
 def create_extension_route():
     """
-    Create Extension
+    Create an extension
 
-    params:
-    - GithubUrl: string. Example https://github.com/username/projectname
+    Request params:
+    * GithubUrl: string. Example https://github.com/username/projectname
+
+    Response:
+    <pre>{data: {Name: 'str', Description: 'str': DeveloperName: 'str'}}</pre>
     """
     user = request.get('REMOTE_USER')
     logger.info('POST /extensions : %s : %s' % (user, dumps(request.json)))
@@ -67,12 +70,12 @@ def create_extension_route():
 @jwt_auth_required
 def update_extension_route(id):
     """
-    Update and Publish Extension
+    Update and publish extension
 
-    params:
-    - ExtName: (string) extension display name
-    - Description: (string)
-    - DeveloperName: (string)
+    Request params:
+    * ExtName: (string) extension display name
+    * Description: (string)
+    * DeveloperName: (string)
     """
     user = request.get('REMOTE_USER')
     logger.info('PATCH /extensions : %s : %s' % (user, dumps(request.json)))
@@ -102,8 +105,8 @@ def image_upload_html_route(id):
     """
     HTML page with an upload form
 
-    query params:
-    - token: (string) authorization token
+    Query params:
+    * token: (string) authorization token
     """
     return template('image_upload', ext_id=id, token=request.GET['token'])
 
@@ -112,10 +115,12 @@ def image_upload_html_route(id):
 @jwt_auth_required
 def add_extension_image_route(id):
     """
-    Add Extension Image
+    Add extension image
 
-    params:
-    - Field names doesn't matter. Multiple files are supported
+    Request params:
+    * Files uploaded as "multipart/form-data"
+
+    Field names don't matter. Multiple files are supported
     """
     user = request.get('REMOTE_USER')
     logger.info('POST /extensions/<id>/images : %s : %s' % (user, dumps(request.json)))
