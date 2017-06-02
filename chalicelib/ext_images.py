@@ -1,7 +1,7 @@
 import io
 import datetime
 import boto3
-from ext_api.config import ext_images_bucket_name as bucket_name, max_upload_size
+from chalicelib.config import ext_images_bucket_name as bucket_name, max_upload_size
 
 s3 = boto3.client('s3')
 

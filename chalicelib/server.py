@@ -4,12 +4,12 @@ from itertools import cycle
 from urllib.error import HTTPError
 from bottle import default_app, request, response, template, FileUpload
 
-from ext_api.auth import bottle_auth_plugin, jwt_auth_required
-from ext_api.db.extensions import (put_extension, update_extension,
-                                   ExtensionAlreadyExistsError, ExtensionNotFoundError)
-from ext_api.github import (get_project_path, get_manifest, validate_manifest,
-                            InvalidGithubUrlError, ManifestValidationError)
-from ext_api.ext_images import upload_images, FileTooLargeError
+from chalicelib.auth import bottle_auth_plugin, jwt_auth_required
+from chalicelib.db.extensions import (put_extension, update_extension,
+                                      ExtensionAlreadyExistsError, ExtensionNotFoundError)
+from chalicelib.github import (get_project_path, get_manifest, validate_manifest,
+                               InvalidGithubUrlError, ManifestValidationError)
+from chalicelib.ext_images import upload_images, FileTooLargeError
 
 
 app = default_app()

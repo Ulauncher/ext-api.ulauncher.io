@@ -1,0 +1,11 @@
+{
+  "dev": {
+    "api_handler_name": "dev-ext-api-ulauncher-dev",
+    "api_handler_arn": "arn:aws:lambda:us-east-1:348853364530:function:dev-ext-api-ulauncher-dev",
+    "rest_api_id": "lxngfwcvp2",
+    "region": "us-east-1",
+    "api_gateway_stage": "dev",
+    "backend": "api",
+    "chalice_version": "0.9.0"
+  }
+}

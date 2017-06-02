@@ -15,8 +15,8 @@ from __future__ import print_function
 import re
 import time
 import json
-from ext_api.auth import parse_token
-from ext_api.server import app
+from chalicelib.auth import parse_token
+from chalicelib.server import app
 
 
 def lambda_handler(event, context):

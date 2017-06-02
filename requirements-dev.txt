@@ -1,4 +1,5 @@
-virtualenv
+chalice
+ipdb
 mock
 pytest
 pytest-pep8

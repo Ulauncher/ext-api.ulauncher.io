@@ -6,9 +6,8 @@ cd ..
 
 docker run \
     -v $(pwd):/var/task \
-    -v $(pwd)/.bashrc:/root/.bashrc \
     -v $HOME/.bash_history:/root/.bash_history \
-    -p 8080:8080 \
+    -p 8000:8000 \
     -it \
     --rm \
     --env-file .env \

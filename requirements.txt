@@ -1,4 +1,2 @@
-zappa
-bottle
 pyjwt
 boto3

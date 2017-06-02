@@ -1,6 +1,7 @@
 *.pyc
 __pycache__
 .env
-docker_env/
+.chalice/deployments
+.chalice/venv
 remote_env.json
 .cache

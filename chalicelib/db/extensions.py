@@ -1,8 +1,8 @@
 import datetime
 from botocore.errorfactory import ClientError
 
-from ext_api.db.helper import inject_table
-from ext_api.config import extensions_table_name
+from chalicelib.db.helper import inject_table
+from chalicelib.config import extensions_table_name
 
 inject_extensions_table = inject_table(extensions_table_name)
 
