@@ -60,12 +60,10 @@ def create_extension_route():
     Create an extension
 
     Request params:
-    * GithubUrl: string. Example https://github.com/username/projectname
+    * GithubUrl: string. Example https://github.com/user/project
 
     Response:
-    * Extension object:
-
-    <pre>{data: {Name: 'str', Description: 'str': DeveloperName: 'str'}}</pre>
+    * Extension object
     """
     user = request.get('REMOTE_USER')
 
@@ -146,6 +144,8 @@ def add_extension_image_route(id):
     Field names don't matter. Multiple files are supported
     """
     user = request.get('REMOTE_USER')
+
+    # TODO: limit images to 5
 
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:

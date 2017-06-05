@@ -8,7 +8,7 @@
         padding: 10px;
         vertical-align: top;
     }
-    .endpoint { position: relative; }
+    .endpoint { position: relative; padding-right: 30px; }
     .endpoint, .code { font-family: monospace; }
     .desc:first-line { font-weight: bold; }
     .endpoint.auth-required:before {
@@ -45,11 +45,32 @@
         ✦ Authorization header required (<code>Authorization:Bearer &lt;token&gt;</code>)
     </p>
 
-    <h3>Add Extension Flow:</h3>
+    <h3>Add Extension Flow</h3>
     <ol>
         <li><code>POST /extensions</code> with GithubUrl</li>
         <li><code>POST /extensions/&lt;id&gt;/images</code> with up to 5 images as <code>multipart/form-data</code></li>
         <li><code>PATCH /extensions/&lt;id&gt;</code> to mark it as published</li>
     </ol>
+
+    <h3>Extension Object</h3>
+    <code>
+        <pre>
+{
+    "CreatedAt": "(ISO UTC time)",
+    "Description": "(string)",
+    "DeveloperName": "(string)",
+    "ExtName": "(string)",
+    "GithubUrl": "https://github.com/&lt;user&gt;/&lt;project&gt;",
+    "ID": "github-&lt;user&gt;-&lt;project&gt;",
+    "Images": [
+        (url 1), (url 2), ...
+    ],
+    "ProjectPath": "&lt;user&gt;/&lt;project&gt;",
+    "Published": (boolean),
+    "User": "(string)"
+}
+
+        </pre>
+    </code>
 
 </div>
