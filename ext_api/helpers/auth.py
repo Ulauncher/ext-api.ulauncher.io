@@ -2,6 +2,7 @@ import os
 import jwt
 import json
 from bottle import request, response
+from ext_api.helpers.response import ErrorResponse
 
 
 AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
@@ -17,7 +18,7 @@ def parse_token(token):
 
         return jwt.decode(token, AUTH0_CLIENT_SECRET, audience=AUTH0_CLIENT_ID)
     except Exception as e:
-        raise AuthError(e)
+        raise AuthError('Unauthorized. %s' % e)
 
 
 class AuthError(Exception):
@@ -32,9 +33,7 @@ def bottle_auth_plugin(callback):
                 decoded = parse_token(request.get_header('Authorization'))
                 assert decoded['sub']
             except AuthError as e:
-                response.content_type = 'application/json'
-                response.status = 401
-                return {'error': 'Unauthorized. %s' % e}
+                return ErrorResponse(e, 401)
 
             request['REMOTE_USER'] = decoded['sub']
 

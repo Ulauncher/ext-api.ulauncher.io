@@ -4,7 +4,7 @@ from itertools import cycle
 from urllib.error import HTTPError
 from bottle import default_app, request, response, template, FileUpload
 
-from ext_api.auth import bottle_auth_plugin, jwt_auth_required
+from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
@@ -144,25 +144,37 @@ def add_extension_image_route(id):
     user = request.get('REMOTE_USER')
     logger.info('POST /extensions/<id>/images : %s : %s' % (user, dumps(request.json)))
 
-    try:
-        ext = get_extension(id)
-    except ExtensionNotFoundError as e:
-        return ErrorResponse(e, 404)
-
-    if ext['User'] != user:
-        response.status = 403
-        return {'error': 'You are not allowed to change extensions of other users'}
-
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:
+        ext = _verify_ext_auth(id)
         assert files, "Files were not provided"
         urls = upload_images(files, id)
         # TODO: save image to the DB
         return {'data': urls}
+    except ExtensionNotFoundError as e:
+        return ErrorResponse(e, 404)
     except AssertionError as e:
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
         return ErrorResponse(e, 413)
+    except AuthError as e:
+        return ErrorResponse(e, 401)
+
+
+def _verify_ext_auth(id):
+    """
+    Verifies if current user can change/delete extension by given ID
+    Return extension dict in case of success
+    AuthError otherwise
+    Can raise ExtensionNotFoundError
+    """
+    ext = get_extension(id)
+    user = request.get('REMOTE_USER')
+
+    if ext['User'] != user:
+        raise AuthError('You are not allowed to change extensions of other users')
+
+    return ext
 
 
 # @app.route('/environ', ['GET'])

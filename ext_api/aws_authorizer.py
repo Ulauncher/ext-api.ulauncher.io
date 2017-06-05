@@ -15,7 +15,7 @@ from __future__ import print_function
 import re
 import time
 import json
-from ext_api.auth import parse_token
+from ext_api.helpers.auth import parse_token
 from ext_api.server import app
 
 
