@@ -12,4 +12,5 @@
     ```
 2. Create `remote_env.json` and upload it to any S3 bucket. Then change `remote_env` in `zappa_settings.json`
 2. `./build-utils/dev-container.sh`
+2. `pip install -r requirements.txt`
 3. `zappa deploy`

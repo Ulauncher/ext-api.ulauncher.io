@@ -42,9 +42,7 @@
     </table>
     <br>
     <p>
-        <p>✦ <code>Authorization<code> header required (<code>Bearer &lt;token&gt;</code>).
-        <p>All other endpoints also require it to have a
-        non-empty value because of an issue with AWS API Gateway Authorizer.
+        ✦ Authorization header required (<code>Authorization:Bearer &lt;token&gt;</code>)
     </p>
 
 </div>
