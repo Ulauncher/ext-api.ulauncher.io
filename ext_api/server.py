@@ -5,12 +5,12 @@ from urllib.error import HTTPError
 from bottle import default_app, request, response, template, FileUpload
 
 from ext_api.auth import bottle_auth_plugin, jwt_auth_required
-from ext_api.db.extensions import (put_extension, update_extension,
+from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
 from ext_api.ext_images import upload_images, FileTooLargeError
-
+from ext_api.aws_helpers import get_url_prefix
 
 app = default_app()
 app.install(bottle_auth_plugin)
@@ -27,7 +27,45 @@ docs_exclude = ["/api-doc.html"]
 def api_doc():
     colors = cycle('#fff #e3e4ed'.split())
     routes = [r for r in app.routes if r.rule not in docs_exclude]
-    return template("api-doc", colors=colors, routes=routes)
+    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix())
+
+
+# @app.route('/protected', ['GET'])
+# @jwt_auth_required
+# def protected_route():
+
+#     def serializable(d):
+#         res = {}
+#         for k, v in d.items():
+#             if isinstance(v, (str, float, int, tuple, list)):
+#                 res[k] = v
+#             elif isinstance(v, dict):
+#                 res[k] = serializable(v)
+#             else:
+#                 res[k] = 'type(%s)' % type(v).__name__
+#         return res
+
+#     return serializable(request.environ)
+
+
+@app.route('/extensions', ['GET'])
+def get_extensions_route():
+    """
+    Returns all extensions
+    """
+    return {'Data': get_extensions()}
+
+
+@app.route('/extensions/<id>', ['GET'])
+def get_extension_route(id):
+    """
+    Returns extension by ID
+    """
+    try:
+        return {'Data': get_extension(id)}
+    except ExtensionNotFoundError as e:
+        response.status = 404
+        return {'error': str(e)}
 
 
 @app.route('/extensions', ['POST'])
@@ -55,7 +93,7 @@ def create_extension_route():
                       ProjectPath=project_path)
 
         return {
-            data: {
+            'Data': {
                 'Name': manifest['name'],
                 'Description': manifest['description'],
                 'DeveloperName': manifest['developer_name'],
@@ -108,7 +146,8 @@ def image_upload_html_route(id):
     Query params:
     * token: (string) authorization token
     """
-    return template('image_upload', ext_id=id, token=request.GET['token'])
+    logger.info('GET image_upload_html_route %s' % get_url_prefix())
+    return template('image_upload', ext_id=id, token=request.GET['token'], url_prefix=get_url_prefix())
 
 
 @app.route('/extensions/<id>/images', ['POST'])
@@ -130,7 +169,7 @@ def add_extension_image_route(id):
         # TODO: check if extension belongs to the user
         assert files, "Files were not provided"
         urls = upload_images(files, id)
-        return {'data': urls}
+        return {'Data': urls}
     except AssertionError as e:
         response.status = 400
         return {'error': str(e)}

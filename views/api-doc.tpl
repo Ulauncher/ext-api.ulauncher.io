@@ -32,7 +32,7 @@
             % auth_required = hasattr(resource.callback, 'auth_required')
             <tr style="background-color:{{ color }}">
                 <td class="endpoint {{ 'auth-required' if auth_required else '' }}">
-                    <pre>{{ resource.method.ljust(6) }} {{ resource.rule }}</pre>
+                    <pre>{{ resource.method.ljust(6) }} {{ url_prefix }}{{ resource.rule }}</pre>
                 </td>
                 <td class="desc">
                     {{! docx }}

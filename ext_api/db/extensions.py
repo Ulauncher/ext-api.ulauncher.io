@@ -1,5 +1,6 @@
 import datetime
 from botocore.errorfactory import ClientError
+from boto3.dynamodb.conditions import Key, Attr
 
 from ext_api.db.helper import inject_table
 from ext_api.config import extensions_table_name
@@ -47,9 +48,29 @@ def update_extension(table, id, **data):
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             raise ExtensionNotFoundError('Extension "%s" not found' % id)
 
-    del updated['Attributes']['Part']
+    return _del_unused_item_keys(updated['Attributes'])
 
-    return updated['Attributes']
+
+@inject_extensions_table
+def get_extensions(table, limit=10):
+    response = table.query(
+        IndexName='CreatedAt-LSI',
+        Select='ALL_ATTRIBUTES',
+        Limit=limit,
+        ConsistentRead=False,
+        ScanIndexForward=False,
+        KeyConditionExpression=Key('Part').eq(0)
+    )
+    return [_del_unused_item_keys(i) for i in response['Items']]
+
+
+@inject_extensions_table
+def get_extension(table, ID):
+    resp = table.get_item(Key={'Part': 0, 'ID': ID})
+    try:
+        return _del_unused_item_keys(extresp['Item'])
+    except KeyError:
+        raise ExtensionNotFoundError('Extension "%s" not found' % ID)
 
 
 class ExtensionAlreadyExistsError(Exception):
@@ -59,6 +80,10 @@ class ExtensionAlreadyExistsError(Exception):
 class ExtensionNotFoundError(Exception):
     pass
 
+
+def _del_unused_item_keys(item):
+    del item['Part']
+    return item
 
 if __name__ == '__main__':
     # Print out some data about the table.
