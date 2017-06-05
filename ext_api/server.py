@@ -6,10 +6,12 @@ from bottle import default_app, request, response, template, FileUpload
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
+                                   remove_extension_image, add_extension_images,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
-from ext_api.ext_images import upload_images, FileTooLargeError
+from ext_api.s3.ext_images import upload_images, delete_image, FileTooLargeError
+from ext_api.helpers.s3 import parse_s3_url
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
 from ext_api.helpers.response import ErrorResponse
@@ -61,10 +63,11 @@ def create_extension_route():
     * GithubUrl: string. Example https://github.com/username/projectname
 
     Response:
+    * Extension object:
+
     <pre>{data: {Name: 'str', Description: 'str': DeveloperName: 'str'}}</pre>
     """
     user = request.get('REMOTE_USER')
-    logger.info('POST /extensions : %s : %s' % (user, dumps(request.json)))
 
     try:
         github_url = request.json.get('GithubUrl', '')
@@ -96,9 +99,11 @@ def update_extension_route(id):
     * ExtName: (string) extension display name
     * Description: (string)
     * DeveloperName: (string)
+
+    Response:
+    * Extension object
     """
     user = request.get('REMOTE_USER')
-    logger.info('PATCH /extensions : %s : %s' % (user, dumps(request.json)))
     data = request.json
 
     try:
@@ -126,7 +131,6 @@ def image_upload_html_route(id):
     Query params:
     * token: (string) authorization token
     """
-    logger.info('GET image_upload_html_route %s' % get_url_prefix())
     return template('image_upload', ext_id=id, token=request.GET['token'], url_prefix=get_url_prefix())
 
 
@@ -142,15 +146,14 @@ def add_extension_image_route(id):
     Field names don't matter. Multiple files are supported
     """
     user = request.get('REMOTE_USER')
-    logger.info('POST /extensions/<id>/images : %s : %s' % (user, dumps(request.json)))
 
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:
         ext = _verify_ext_auth(id)
         assert files, "Files were not provided"
         urls = upload_images(files, id)
-        # TODO: save image to the DB
-        return {'data': urls}
+        data = add_extension_images(id, urls)
+        return {'data': data}
     except ExtensionNotFoundError as e:
         return ErrorResponse(e, 404)
     except AssertionError as e:
@@ -161,12 +164,41 @@ def add_extension_image_route(id):
         return ErrorResponse(e, 401)
 
 
+@app.route('/extensions/<id>/images/<image_idx>', ['DELETE'])
+@jwt_auth_required
+def delete_extension_image_route(id, image_idx):
+    """
+    Delete extension image
+
+    <code>image_idx</code> index of an image starting from 0
+
+    Response:
+    * Extension object
+    """
+    user = request.get('REMOTE_USER')
+    image_idx = int(image_idx)
+
+    try:
+        ext = _verify_ext_auth(id)
+        image_url = ext['Images'][image_idx]
+        data = remove_extension_image(id, image_idx)
+        delete_image(parse_s3_url(image_url)[1])
+        return {'data': data}
+    except (ExtensionNotFoundError, IndexError) as e:
+        return ErrorResponse(e, 404)
+    except AuthError as e:
+        return ErrorResponse(e, 401)
+
+
 def _verify_ext_auth(id):
     """
     Verifies if current user can change/delete extension by given ID
-    Return extension dict in case of success
-    AuthError otherwise
-    Can raise ExtensionNotFoundError
+
+    :param str id:
+    :raises AuthError:
+    :raises ExtensionNotFoundError:
+
+    :returns: dict - extension
     """
     ext = get_extension(id)
     user = request.get('REMOTE_USER')

@@ -57,6 +57,33 @@ def update_extension(table, id, **data):
 
 @timeit
 @inject_extensions_table
+def add_extension_images(table, id, image_urls):
+    updated = table.update_item(
+        Key={'Part': 0,
+             'ID': id},
+        UpdateExpression='SET Images = list_append(Images, :images)',
+        ExpressionAttributeValues={':images': image_urls},
+        ReturnValues='ALL_NEW'
+    )
+
+    return _del_unused_item_keys(updated['Attributes'])
+
+
+@timeit
+@inject_extensions_table
+def remove_extension_image(table, id, image_idx):
+    updated = table.update_item(
+        Key={'Part': 0,
+             'ID': id},
+        UpdateExpression='REMOVE Images[%s]' % image_idx,
+        ReturnValues='ALL_NEW'
+    )
+
+    return _del_unused_item_keys(updated['Attributes'])
+
+
+@timeit
+@inject_extensions_table
 def get_extensions(table, limit=10):
     response = table.query(
         IndexName='CreatedAt-LSI',

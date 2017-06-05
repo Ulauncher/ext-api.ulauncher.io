@@ -30,6 +30,10 @@ def _upload_image(fileobj, ext_id):
     return 'https://%s.s3.amazonaws.com/%s' % (bucket_name, key)
 
 
+def delete_image(key):
+    s3.delete_object(Bucket=bucket_name, Key=key)
+
+
 def validate_image(fileobj):
     """
     Check file size and type
