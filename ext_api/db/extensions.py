@@ -2,9 +2,9 @@ import datetime
 from botocore.errorfactory import ClientError
 from boto3.dynamodb.conditions import Key, Attr
 
-from ext_api.db.helper import inject_table
+from ext_api.helpers.db import inject_table
+from ext_api.helpers.logging import timeit
 from ext_api.config import extensions_table_name
-from ext_api.logging_helpers import timeit
 
 inject_extensions_table = inject_table(extensions_table_name)
 

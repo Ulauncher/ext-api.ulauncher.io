@@ -10,8 +10,9 @@ from ext_api.db.extensions import (put_extension, update_extension, get_extensio
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
 from ext_api.ext_images import upload_images, FileTooLargeError
-from ext_api.aws_helpers import get_url_prefix
-from ext_api.logging_helpers import setup_logging
+from ext_api.helpers.aws import get_url_prefix
+from ext_api.helpers.logging import setup_logging
+from ext_api.helpers.response import ErrorResponse
 
 
 app = default_app()
@@ -36,7 +37,7 @@ def get_extensions_route():
     """
     Returns all extensions
     """
-    return {'Data': get_extensions()}
+    return {'data': get_extensions()}
 
 
 @app.route('/extensions/<id>', ['GET'])
@@ -45,10 +46,9 @@ def get_extension_route(id):
     Returns extension by ID
     """
     try:
-        return {'Data': get_extension(id)}
+        return {'data': get_extension(id)}
     except ExtensionNotFoundError as e:
-        response.status = 404
-        return {'error': str(e)}
+        return ErrorResponse(e, 404)
 
 
 @app.route('/extensions', ['POST'])
@@ -76,15 +76,14 @@ def create_extension_route():
                       ProjectPath=project_path)
 
         return {
-            'Data': {
+            'data': {
                 'Name': manifest['name'],
                 'Description': manifest['description'],
                 'DeveloperName': manifest['developer_name'],
             }
         }
     except (InvalidGithubUrlError, HTTPError, ManifestValidationError, ExtensionAlreadyExistsError) as e:
-        response.status = 400
-        return {'error': str(e)}
+        return ErrorResponse(e, 400)
 
 
 @app.route('/extensions/<id>', ['PATCH'])
@@ -114,11 +113,9 @@ def update_extension_route(id):
                                 Published=True)
         return {'data': data}
     except ExtensionNotFoundError as e:
-        response.status = 404
-        return {'error': str(e)}
+        return ErrorResponse(e, 404)
     except AssertionError as e:
-        response.status = 400
-        return {'error': str(e)}
+        return ErrorResponse(e, 400)
 
 
 @app.route('/extensions/<id>/upload.html', ['GET'])
@@ -150,8 +147,7 @@ def add_extension_image_route(id):
     try:
         ext = get_extension(id)
     except ExtensionNotFoundError as e:
-        response.status = 404
-        return {'error': str(e)}
+        return ErrorResponse(e, 404)
 
     if ext['User'] != user:
         response.status = 403
@@ -162,13 +158,11 @@ def add_extension_image_route(id):
         assert files, "Files were not provided"
         urls = upload_images(files, id)
         # TODO: save image to the DB
-        return {'Data': urls}
+        return {'data': urls}
     except AssertionError as e:
-        response.status = 400
-        return {'error': str(e)}
+        return ErrorResponse(e, 400)
     except FileTooLargeError as e:
-        response.status = 413
-        return {'error': str(e)}
+        return ErrorResponse(e, 413)
 
 
 # @app.route('/environ', ['GET'])
