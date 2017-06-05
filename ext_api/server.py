@@ -11,41 +11,24 @@ from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
 from ext_api.ext_images import upload_images, FileTooLargeError
 from ext_api.aws_helpers import get_url_prefix
+from ext_api.logging_helpers import setup_logging
+
 
 app = default_app()
 app.install(bottle_auth_plugin)
 
-logging.basicConfig()
+setup_logging()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 response.content_type = 'application/json'
-docs_exclude = ["/api-doc.html"]
 
 
 @app.route('/api-doc.html', method=['GET'])
 def api_doc():
+    docs_exclude = ["/api-doc.html"]
     colors = cycle('#fff #e3e4ed'.split())
     routes = [r for r in app.routes if r.rule not in docs_exclude]
     return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix())
-
-
-# @app.route('/protected', ['GET'])
-# @jwt_auth_required
-# def protected_route():
-
-#     def serializable(d):
-#         res = {}
-#         for k, v in d.items():
-#             if isinstance(v, (str, float, int, tuple, list)):
-#                 res[k] = v
-#             elif isinstance(v, dict):
-#                 res[k] = serializable(v)
-#             else:
-#                 res[k] = 'type(%s)' % type(v).__name__
-#         return res
-
-#     return serializable(request.environ)
 
 
 @app.route('/extensions', ['GET'])
@@ -164,11 +147,21 @@ def add_extension_image_route(id):
     user = request.get('REMOTE_USER')
     logger.info('POST /extensions/<id>/images : %s : %s' % (user, dumps(request.json)))
 
+    try:
+        ext = get_extension(id)
+    except ExtensionNotFoundError as e:
+        response.status = 404
+        return {'error': str(e)}
+
+    if ext['User'] != user:
+        response.status = 403
+        return {'error': 'You are not allowed to change extensions of other users'}
+
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:
-        # TODO: check if extension belongs to the user
         assert files, "Files were not provided"
         urls = upload_images(files, id)
+        # TODO: save image to the DB
         return {'Data': urls}
     except AssertionError as e:
         response.status = 400
@@ -176,6 +169,24 @@ def add_extension_image_route(id):
     except FileTooLargeError as e:
         response.status = 413
         return {'error': str(e)}
+
+
+# @app.route('/environ', ['GET'])
+# @jwt_auth_required
+# def print_environ_route():
+
+#     def serializable(d):
+#         res = {}
+#         for k, v in d.items():
+#             if isinstance(v, (str, float, int, tuple, list)):
+#                 res[k] = v
+#             elif isinstance(v, dict):
+#                 res[k] = serializable(v)
+#             else:
+#                 res[k] = 'type(%s)' % type(v).__name__
+#         return res
+
+#     return serializable(request.environ)
 
 
 if __name__ == '__main__':

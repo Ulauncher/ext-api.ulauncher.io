@@ -4,15 +4,18 @@ from boto3.dynamodb.conditions import Key, Attr
 
 from ext_api.db.helper import inject_table
 from ext_api.config import extensions_table_name
+from ext_api.logging_helpers import timeit
 
 inject_extensions_table = inject_table(extensions_table_name)
 
 
+@timeit
 @inject_extensions_table
 def get_creation_date(table):
     return table.creation_date_time
 
 
+@timeit
 @inject_extensions_table
 def put_extension(table, User, GithubUrl, ProjectPath):
     try:
@@ -30,6 +33,7 @@ def put_extension(table, User, GithubUrl, ProjectPath):
             raise ExtensionAlreadyExistsError('This extension already exists')
 
 
+@timeit
 @inject_extensions_table
 def update_extension(table, id, **data):
     upd_expr = 'set ' + ', '.join(['%s = :%s' % (k, k) for k, _ in data.items()])
@@ -51,6 +55,7 @@ def update_extension(table, id, **data):
     return _del_unused_item_keys(updated['Attributes'])
 
 
+@timeit
 @inject_extensions_table
 def get_extensions(table, limit=10):
     response = table.query(
@@ -64,11 +69,12 @@ def get_extensions(table, limit=10):
     return [_del_unused_item_keys(i) for i in response['Items']]
 
 
+@timeit
 @inject_extensions_table
 def get_extension(table, ID):
     resp = table.get_item(Key={'Part': 0, 'ID': ID})
     try:
-        return _del_unused_item_keys(extresp['Item'])
+        return _del_unused_item_keys(resp['Item'])
     except KeyError:
         raise ExtensionNotFoundError('Extension "%s" not found' % ID)
 
@@ -84,9 +90,3 @@ class ExtensionNotFoundError(Exception):
 def _del_unused_item_keys(item):
     del item['Part']
     return item
-
-if __name__ == '__main__':
-    # Print out some data about the table.
-    # This will cause a request to be made to DynamoDB and its attribute
-    # values will be set based on the response.
-    print(get_creation_date())

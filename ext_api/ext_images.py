@@ -1,7 +1,7 @@
 import io
 import datetime
 import boto3
-from ext_api.config import ext_images_bucket_name as bucket_name, max_upload_size
+from ext_api.config import ext_images_bucket_name as bucket_name, max_image_size
 
 s3 = boto3.client('s3')
 
@@ -45,9 +45,9 @@ def validate_image(fileobj):
 
         data += buf
 
-        if len(data) > max_upload_size:
+        if len(data) > max_image_size:
             fileobj.close()
-            raise FileTooLargeError('File too large (max: %d megabytes)' % (max_upload_size / (1024 * 1024)))
+            raise FileTooLargeError('File too large (max: %d megabytes)' % (max_image_size / (1024 * 1024)))
 
     return io.BytesIO(data)
 

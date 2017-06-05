@@ -45,4 +45,11 @@
         ✦ Authorization header required (<code>Authorization:Bearer &lt;token&gt;</code>)
     </p>
 
+    <h3>Add Extension Flow:</h3>
+    <ol>
+        <li><code>POST /extensions</code> with GithubUrl</li>
+        <li><code>POST /extensions/&lt;id&gt;/images</code> with up to 5 images as <code>multipart/form-data</code></li>
+        <li><code>PATCH /extensions/&lt;id&gt;</code> to mark it as published</li>
+    </ol>
+
 </div>
