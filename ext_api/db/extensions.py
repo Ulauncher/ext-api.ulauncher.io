@@ -1,4 +1,5 @@
 import datetime
+import boto3
 from botocore.errorfactory import ClientError
 from boto3.dynamodb.conditions import Key, Attr
 
@@ -106,6 +107,103 @@ def get_extension(table, ID):
         raise ExtensionNotFoundError('Extension "%s" not found' % ID)
 
 
+def create_table():
+    dynamodb = boto3.resource('dynamodb')
+
+    table = dynamodb.create_table(
+        TableName=extensions_table_name,
+        KeySchema=[
+            {
+                'AttributeName': 'Part',
+                'KeyType': 'HASH'  # Partition key
+            },
+            {
+                'AttributeName': 'ID',
+                'KeyType': 'RANGE'  # Sort key
+            },
+        ],
+        AttributeDefinitions=[
+            {
+                'AttributeName': 'Part',
+                'AttributeType': 'N'
+            },
+            {
+                'AttributeName': 'ID',
+                'AttributeType': 'S'
+            },
+            {
+                'AttributeName': 'CreatedAt',
+                'AttributeType': 'S'
+            },
+            {
+                'AttributeName': 'User',
+                'AttributeType': 'S'
+            },
+            {
+                'AttributeName': 'Rating',
+                'AttributeType': 'N'
+            },
+
+        ],
+        LocalSecondaryIndexes=[
+            {
+                'IndexName': 'CreatedAt-LSI',
+                'KeySchema': [
+                    {
+                        'AttributeName': 'Part',
+                        'KeyType': 'HASH'  # Partition key
+                    },
+                    {
+                        'AttributeName': 'CreatedAt',
+                        'KeyType': 'RANGE'  # Sort key
+                    },
+                ],
+                'Projection': {
+                    'ProjectionType': 'ALL'
+                }
+            },
+            {
+                'IndexName': 'User-LSI',
+                'KeySchema': [
+                    {
+                        'AttributeName': 'Part',
+                        'KeyType': 'HASH'  # Partition key
+                    },
+                    {
+                        'AttributeName': 'User',
+                        'KeyType': 'RANGE'  # Sort key
+                    },
+                ],
+                'Projection': {
+                    'ProjectionType': 'ALL'
+                }
+            },
+            {
+                'IndexName': 'Rating-LSI',
+                'KeySchema': [
+                    {
+                        'AttributeName': 'Part',
+                        'KeyType': 'HASH'  # Partition key
+                    },
+                    {
+                        'AttributeName': 'Rating',
+                        'KeyType': 'RANGE'  # Sort key
+                    },
+                ],
+                'Projection': {
+                    'ProjectionType': 'ALL'
+                }
+            },
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 5,
+            'WriteCapacityUnits': 5,
+        }
+    )
+
+    print("Table status:", table.table_status)
+
+
 class ExtensionAlreadyExistsError(Exception):
     pass
 
@@ -117,3 +215,10 @@ class ExtensionNotFoundError(Exception):
 def _del_unused_item_keys(item):
     del item['Part']
     return item
+
+
+if __name__ == '__main__':
+    try:
+        get_creation_date()
+    except Exception as e:
+        create_table()
