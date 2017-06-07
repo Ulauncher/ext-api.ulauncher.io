@@ -126,7 +126,7 @@ def update_extension_route(id):
 @app.route('/extensions/<id>/upload.html', ['GET'])
 def image_upload_html_route(id):
     """
-    HTML page with an upload form
+    HTML page with an upload form for testing
 
     Query params:
     * token: (string) authorization token
