@@ -19,10 +19,14 @@ def get_creation_date(table):
 @timeit
 @inject_extensions_table
 def put_extension(table, User, GithubUrl, ProjectPath):
+    """
+    :returns: (int) id of a newly added extension
+    """
+    id = 'github-%s' % ProjectPath.replace('/', '-').lower()
     try:
-        return table.put_item(Item={
+        table.put_item(Item={
             'Part': 0,  # we want all the data to be in one partition, so partition key will always be 0
-            'ID': 'github-%s' % ProjectPath.replace('/', '-').lower(),
+            'ID': id,
             'User': User,
             'CreatedAt': datetime.datetime.utcnow().isoformat(),
             'GithubUrl': GithubUrl,
@@ -32,6 +36,9 @@ def put_extension(table, User, GithubUrl, ProjectPath):
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             raise ExtensionAlreadyExistsError('This extension already exists')
+        raise
+
+    return id
 
 
 @timeit
@@ -52,6 +59,7 @@ def update_extension(table, id, **data):
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             raise ExtensionNotFoundError('Extension "%s" not found' % id)
+        raise
 
     return _del_unused_item_keys(updated['Attributes'])
 

@@ -15,6 +15,7 @@ from ext_api.helpers.s3 import parse_s3_url
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
 from ext_api.helpers.response import ErrorResponse
+from ext_api.config import max_images
 
 
 app = default_app()
@@ -72,12 +73,13 @@ def create_extension_route():
         project_path = get_project_path(github_url)
         manifest = get_manifest(project_path)
         validate_manifest(manifest)
-        put_extension(User=user,
-                      GithubUrl=github_url,
-                      ProjectPath=project_path)
+        id = put_extension(User=user,
+                           GithubUrl=github_url,
+                           ProjectPath=project_path)
 
         return {
             'data': {
+                'ID': id,
                 'Name': manifest['name'],
                 'Description': manifest['description'],
                 'DeveloperName': manifest['developer_name'],
@@ -105,7 +107,7 @@ def update_extension_route(id):
     data = request.json
 
     try:
-        assert data.get('ExtName'), 'Name cannot be empty'
+        assert data.get('ExtName'), 'ExtName cannot be empty'
         assert data.get('Description'), 'Description cannot be empty'
         assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
 
@@ -145,18 +147,18 @@ def add_extension_image_route(id):
     """
     user = request.get('REMOTE_USER')
 
-    # TODO: limit images to 5
-
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:
         ext = _verify_ext_auth(id)
         assert files, "Files were not provided"
+        if len(ext.get('Images', [])) + len(files) > max_images:
+            raise MaxImageLimitError('You cannot upload more than %s images' % max_images)
         urls = upload_images(files, id)
         data = add_extension_images(id, urls)
         return {'data': data}
     except ExtensionNotFoundError as e:
         return ErrorResponse(e, 404)
-    except AssertionError as e:
+    except (AssertionError, MaxImageLimitError) as e:
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
         return ErrorResponse(e, 413)
@@ -225,6 +227,10 @@ def _verify_ext_auth(id):
 #         return res
 
 #     return serializable(request.environ)
+
+
+class MaxImageLimitError(Exception):
+    pass
 
 
 if __name__ == '__main__':
