@@ -21,3 +21,16 @@ def inject_table(table_name):
         return wrapper
 
     return fn_wrapper
+
+
+def generate_attrs(query):
+    names = dict([('#%s' % k, k) for k in query.keys()])
+    values = dict([(':%s' % k, v) for k, v in query.items()])
+    filter_expr = ', '.join(['#%s = :%s' % (k, k) for k in query.keys()])
+
+    return dict(
+        ExpressionAttributeNames=names,
+        ExpressionAttributeValues=values,
+        UpdateExpression='set ' + filter_expr,
+        FilterExpression=filter_expr
+    )

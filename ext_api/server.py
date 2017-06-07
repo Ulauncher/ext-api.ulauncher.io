@@ -6,7 +6,7 @@ from bottle import default_app, request, response, template, FileUpload
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
-                                   remove_extension_image, add_extension_images,
+                                   remove_extension_image, add_extension_images, get_user_extensions,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
@@ -41,6 +41,16 @@ def get_extensions_route():
     Returns all extensions
     """
     return {'data': get_extensions()}
+
+
+@app.route('/my/extensions', ['GET'])
+@jwt_auth_required
+def get_my_extensions_route():
+    """
+    Returns user's extensions
+    """
+    user = request.get('REMOTE_USER')
+    return {'data': get_user_extensions(user)}
 
 
 @app.route('/extensions/<id>', ['GET'])
@@ -96,7 +106,7 @@ def update_extension_route(id):
     Update and publish extension
 
     Request params:
-    * ExtName: (string) extension display name
+    * Name: (string) extension display name
     * Description: (string)
     * DeveloperName: (string)
 
@@ -107,12 +117,12 @@ def update_extension_route(id):
     data = request.json
 
     try:
-        assert data.get('ExtName'), 'ExtName cannot be empty'
+        assert data.get('Name'), 'Name cannot be empty'
         assert data.get('Description'), 'Description cannot be empty'
         assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
 
         data = update_extension(id,
-                                ExtName=data['ExtName'],
+                                Name=data['Name'],
                                 Description=data['Description'],
                                 DeveloperName=data['DeveloperName'],
                                 Published=True)

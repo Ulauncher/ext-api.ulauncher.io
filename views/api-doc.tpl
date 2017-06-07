@@ -59,7 +59,7 @@
     "CreatedAt": "(ISO UTC time)",
     "Description": "(string)",
     "DeveloperName": "(string)",
-    "ExtName": "(string)",
+    "Name": "(string)",
     "GithubUrl": "https://github.com/&lt;user&gt;/&lt;project&gt;",
     "ID": "github-&lt;user&gt;-&lt;project&gt;",
     "Images": [

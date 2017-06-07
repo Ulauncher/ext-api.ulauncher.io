@@ -3,7 +3,7 @@ import boto3
 from botocore.errorfactory import ClientError
 from boto3.dynamodb.conditions import Key, Attr
 
-from ext_api.helpers.db import inject_table
+from ext_api.helpers.db import inject_table, generate_attrs
 from ext_api.helpers.logging import timeit
 from ext_api.config import extensions_table_name
 
@@ -31,7 +31,8 @@ def put_extension(table, User, GithubUrl, ProjectPath):
             'CreatedAt': datetime.datetime.utcnow().isoformat(),
             'GithubUrl': GithubUrl,
             'ProjectPath': ProjectPath,
-            'Published': False
+            'Published': False,
+            'Images': []
         }, ConditionExpression='attribute_not_exists(Part) AND attribute_not_exists(ID)')
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
@@ -44,15 +45,15 @@ def put_extension(table, User, GithubUrl, ProjectPath):
 @timeit
 @inject_extensions_table
 def update_extension(table, id, **data):
-    upd_expr = 'set ' + ', '.join(['%s = :%s' % (k, k) for k, _ in data.items()])
-    values = dict([(':%s' % k, v) for k, v in data.items()])
+    attrs = generate_attrs(data)
 
     try:
         updated = table.update_item(
             Key={'Part': 0,
                  'ID': id},
-            UpdateExpression=upd_expr,
-            ExpressionAttributeValues=values,
+            ExpressionAttributeNames=attrs['ExpressionAttributeNames'],
+            ExpressionAttributeValues=attrs['ExpressionAttributeValues'],
+            UpdateExpression=attrs['UpdateExpression'],
             ReturnValues='ALL_NEW',
             ConditionExpression='attribute_exists(Part) AND attribute_exists(ID)'
         )
@@ -101,6 +102,19 @@ def get_extensions(table, limit=10):
         ConsistentRead=False,
         ScanIndexForward=False,
         KeyConditionExpression=Key('Part').eq(0)
+    )
+    return [_del_unused_item_keys(i) for i in response['Items']]
+
+
+@timeit
+@inject_extensions_table
+def get_user_extensions(table, user, limit=10):
+    response = table.query(
+        IndexName='User-LSI',
+        Select='ALL_ATTRIBUTES',
+        Limit=limit,
+        ConsistentRead=False,
+        KeyConditionExpression=Key('Part').eq(0) & Key('User').eq(user)
     )
     return [_del_unused_item_keys(i) for i in response['Items']]
 
