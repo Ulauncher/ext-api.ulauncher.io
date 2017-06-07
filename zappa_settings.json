@@ -1,6 +1,6 @@
 {
   "dev": {
-    "project_name": "dev-ext-api-zappa",
+    "project_name": "ext-api-zappa",
     "apigateway_description": "ext-api.ulauncher.io",
     "timeout_seconds": 5,
     "memory_size": 128,
@@ -10,5 +10,17 @@
     "app_function": "ext_api.server.app",
     "s3_bucket": "dev-ext-api-zappa",
     "remote_env": "s3://dev-ext-api-config/remote_env.json"
+  },
+  "stg": {
+    "project_name": "ext-api-zappa",
+    "apigateway_description": "ext-api.ulauncher.io",
+    "timeout_seconds": 5,
+    "memory_size": 128,
+    "debug": true,
+    "cors": true,
+    "keep_warm": true,
+    "app_function": "ext_api.server.app",
+    "s3_bucket": "stg-ext-api-zappa",
+    "remote_env": "s3://stg-ext-api-config/remote_env.json"
   }
 }

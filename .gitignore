@@ -1,6 +1,6 @@
 *.pyc
 __pycache__
-.env
+.env*
 docker_env/
 remote_env.json
 .cache
