@@ -7,10 +7,11 @@ from bottle import default_app, request, response, template, FileUpload
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
                                    remove_extension_image, add_extension_images, get_user_extensions,
+                                   delete_extension, ExtensionDoesntBelongToUserError,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
-from ext_api.s3.ext_images import upload_images, delete_image, FileTooLargeError
+from ext_api.s3.ext_images import upload_images, delete_image, delete_images, FileTooLargeError
 from ext_api.helpers.s3 import parse_s3_url
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
@@ -131,6 +132,19 @@ def update_extension_route(id):
         return ErrorResponse(e, 404)
     except AssertionError as e:
         return ErrorResponse(e, 400)
+
+
+@app.route('/extensions/<id>', ['DELETE'])
+@jwt_auth_required
+def delete_extension_route(id):
+    """
+    Deletes extension by ID
+    """
+    try:
+        delete_extension(id, user=request.get('REMOTE_USER'))
+        delete_images(id)
+    except ExtensionDoesntBelongToUserError as e:
+        return ErrorResponse(e, 401)
 
 
 @app.route('/extensions/<id>/upload.html', ['GET'])

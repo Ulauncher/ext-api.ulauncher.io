@@ -1,9 +1,10 @@
 import io
 import datetime
 import boto3
-from ext_api.config import ext_images_bucket_name as bucket_name, max_image_size
+from ext_api.config import ext_images_bucket_name, max_image_size
 
-s3 = boto3.client('s3')
+s3 = boto3.resource('s3')
+image_bucket = s3.Bucket(ext_images_bucket_name)
 
 
 def upload_images(file_objects, ext_id):
@@ -22,16 +23,26 @@ def upload_images(file_objects, ext_id):
 def _upload_image(fileobj, ext_id):
     filename = '%s.png' % datetime.datetime.utcnow().isoformat()
     key = '%s/%s' % (ext_id, filename)
-    s3.upload_fileobj(fileobj,
-                      bucket_name,
-                      key,
-                      ExtraArgs={'ACL': 'public-read'})
+    image_bucket.upload_fileobj(fileobj,
+                                key,
+                                ExtraArgs={'ACL': 'public-read'})
 
     return 'https://%s.s3.amazonaws.com/%s' % (bucket_name, key)
 
 
 def delete_image(key):
-    s3.delete_object(Bucket=bucket_name, Key=key)
+    image_bucket.delete_objects(Delete={'Objects': [{'Key': key}]})
+
+
+def delete_images(ext_id):
+    objects = []
+    for obj in image_bucket.objects.filter(Prefix='%s/' % ext_id):
+        objects.append({'Key': obj.key})
+
+    if not objects:
+        return
+
+    image_bucket.delete_objects(Delete={'Objects': objects})
 
 
 def validate_image(fileobj):

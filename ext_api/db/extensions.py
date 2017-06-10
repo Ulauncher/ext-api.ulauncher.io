@@ -67,6 +67,27 @@ def update_extension(table, id, **data):
 
 @timeit
 @inject_extensions_table
+def delete_extension(table, id, user=None):
+    """
+    If user is passed it will also check belonging it to user
+
+    :raises ExtensionDoesntBelongToUserError:
+    """
+    kwargs = {'Key': {'Part': 0, 'ID': id}}
+
+    if user:
+        kwargs['ConditionExpression'] = Attr('User').eq(user)
+
+    try:
+        table.delete_item(**kwargs)
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+            raise ExtensionDoesntBelongToUserError("Extension '%s' doesn't belong to user" % id)
+        raise
+
+
+@timeit
+@inject_extensions_table
 def add_extension_images(table, id, image_urls):
     updated = table.update_item(
         Key={'Part': 0,
@@ -231,6 +252,10 @@ class ExtensionAlreadyExistsError(Exception):
 
 
 class ExtensionNotFoundError(Exception):
+    pass
+
+
+class ExtensionDoesntBelongToUserError(Exception):
     pass
 
 
