@@ -16,21 +16,19 @@ from ext_api.helpers.s3 import parse_s3_url
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
 from ext_api.helpers.response import ErrorResponse
+from ext_api.helpers.cors import allow_options_requests, add_options_route
 from ext_api.config import max_images
 
 
 app = default_app()
+app.install(allow_options_requests)
 app.install(bottle_auth_plugin)
+add_options_route(app)
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 response.content_type = 'application/json'
-
-
-@hook('after_request')
-def enable_cors():
-    response.headers['Access-Control-Allow-Origin'] = '*'
 
 
 @app.route('/api-doc.html', method=['GET'])

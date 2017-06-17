@@ -6,6 +6,6 @@
 1. Don't allow to publish ext. without images
 1. Add support for image resizing
 1. Cache GET requests with S3
-1. Set up authorizer when AWS supports optional token
-    https://forums.aws.amazon.com/thread.jspa?messageID=764080&#764080
+1. Set up authorizer when AWS implements [support optional token](https://forums.aws.amazon.com/thread.jspa?messageID=764080&#764080)  
     Check authorizer in commit dcf53c1
+1. Set CORS: true in zappa_settings.json once [Miserlou/Zappa/issues/699](https://github.com/Miserlou/Zappa/issues/699) is fixed
