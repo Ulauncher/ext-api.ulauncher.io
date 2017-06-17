@@ -2,7 +2,7 @@ import logging
 from json import dumps
 from itertools import cycle
 from urllib.error import HTTPError
-from bottle import default_app, request, response, template, FileUpload
+from bottle import default_app, hook, request, response, template, FileUpload
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
@@ -26,6 +26,11 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 response.content_type = 'application/json'
+
+
+@hook('after_request')
+def enable_cors():
+    response.headers['Access-Control-Allow-Origin'] = '*'
 
 
 @app.route('/api-doc.html', method=['GET'])
