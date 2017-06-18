@@ -1,5 +1,5 @@
 from json import dumps
-from bottle import HTTPResponse
+from bottle import HTTPResponse, response
 
 
 class ErrorResponse(HTTPResponse):
@@ -19,4 +19,8 @@ class ErrorResponse(HTTPResponse):
 
         json_body = dumps(body)
 
-        super(HTTPResponse, self).__init__(json_body, status, {'Content-Type': 'application/json'})
+        headers = {}
+        headers.update(response.headers)
+        headers['Content-Type'] = 'application/json'
+
+        super(HTTPResponse, self).__init__(json_body, status, headers)
