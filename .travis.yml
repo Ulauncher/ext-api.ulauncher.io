@@ -5,6 +5,7 @@ services:
 before_install:
 - openssl aes-256-cbc -K $encrypted_ff3072ba7d7a_key -iv $encrypted_ff3072ba7d7a_iv
   -in .aws.enc -out .aws -d
+install: "true"
 script:
 - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then bash ./build-utils/zappa-update.sh;
   fi
