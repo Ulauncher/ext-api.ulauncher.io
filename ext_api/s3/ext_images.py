@@ -7,7 +7,11 @@ s3 = boto3.resource('s3')
 image_bucket = s3.Bucket(ext_images_bucket_name)
 
 
-def upload_images(file_objects, ext_id):
+def get_user_images(user_id):
+    return image_bucket.objects.filter(Prefix='%s/' % user_id)
+
+
+def upload_images(user_id, file_objects):
     """
     Returns a list of S3 URLs
     Raises AssertionError, FileTooLargeError
@@ -15,28 +19,42 @@ def upload_images(file_objects, ext_id):
     images = [validate_image(fileobj) for fileobj in file_objects]
     urls = []
     for image in images:
-        urls.append(_upload_image(image, ext_id))
+        urls.append(_upload_image(user_id, image))
 
     return urls
 
 
-def _upload_image(fileobj, ext_id):
+def _upload_image(user_id, fileobj):
     filename = '%s.png' % datetime.datetime.utcnow().isoformat()
-    key = '%s/%s' % (ext_id, filename)
+    key = '%s/%s' % (user_id, filename)
     image_bucket.upload_fileobj(fileobj,
                                 key,
                                 ExtraArgs={'ACL': 'public-read'})
 
-    return 'https://%s.s3.amazonaws.com/%s' % (bucket_name, key)
+    return 'https://%s.s3.amazonaws.com/%s' % (ext_images_bucket_name, key)
 
 
 def delete_image(key):
     image_bucket.delete_objects(Delete={'Objects': [{'Key': key}]})
 
 
-def delete_images(ext_id):
+def delete_images(urls, user_id):
+    """
+    TODO: incomplete
+    """
     objects = []
-    for obj in image_bucket.objects.filter(Prefix='%s/' % ext_id):
+    for url in urls:
+        objects.append({'Key': obj.key})
+
+    if not objects:
+        return
+
+    image_bucket.delete_objects(Delete={'Objects': objects})
+
+
+def delete_user_images(user_id):
+    objects = []
+    for obj in image_bucket.objects.filter(Prefix='%s/' % user_id):
         objects.append({'Key': obj.key})
 
     if not objects:
@@ -67,5 +85,17 @@ def validate_image(fileobj):
     return io.BytesIO(data)
 
 
+def validate_image_url(url):
+    url = str(url)
+    if not url:
+        raise ImageUrlValidationError('Image URL cannot be empty')
+    if not url.startswith('https://%s.s3.amazonaws.com/' % ext_images_bucket_name):
+        raise ImageUrlValidationError('You cannot use external image URLs')
+
+
 class FileTooLargeError(Exception):
+    pass
+
+
+class ImageUrlValidationError(Exception):
     pass

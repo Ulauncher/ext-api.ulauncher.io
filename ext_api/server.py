@@ -6,18 +6,17 @@ from bottle import default_app, hook, request, response, template, FileUpload
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
 from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
-                                   remove_extension_image, add_extension_images, get_user_extensions,
-                                   delete_extension, ExtensionDoesntBelongToUserError,
+                                   get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
-from ext_api.s3.ext_images import upload_images, delete_image, delete_images, FileTooLargeError
-from ext_api.helpers.s3 import parse_s3_url
+from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images,
+                                   ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
-from ext_api.config import max_images
+from ext_api.config import max_images_per_uer
 
 
 app = default_app()
@@ -33,7 +32,7 @@ response.content_type = 'application/json'
 
 @app.route('/api-doc.html', method=['GET'])
 def api_doc():
-    docs_exclude = ["/api-doc.html"]
+    docs_exclude = ["/api-doc.html", "/<url:re:.*>"]
     colors = cycle('#fff #e3e4ed'.split())
     routes = [r for r in app.routes if r.rule not in docs_exclude]
     return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix())
@@ -68,51 +67,50 @@ def get_extension_route(id):
         return ErrorResponse(e, 404)
 
 
-@app.route('/extensions', ['POST'])
+@app.route('/check-manifest', ['GET'])
 @jwt_auth_required
-def create_extension_route():
+def check_ext_manifest_route():
     """
-    Create an extension
+    Check extension manifest
 
-    Request params:
-    * GithubUrl: string. Example https://github.com/user/project
+    Query params:
+    * url: string. Example https://github.com/user/project
 
     Response:
-    * Extension object
+    * {Name: (str), Description: (str), DeveloperName: (str)}
     """
-    user = request.get('REMOTE_USER')
 
     try:
-        github_url = request.json.get('GithubUrl', '')
-        project_path = get_project_path(github_url)
+        url = request.GET.get('url')
+        assert url, 'query argument "url" cannot be empty'
+        project_path = get_project_path(url)
         manifest = get_manifest(project_path)
         validate_manifest(manifest)
-        id = put_extension(User=user,
-                           GithubUrl=github_url,
-                           ProjectPath=project_path)
 
         return {
             'data': {
-                'ID': id,
+                'GithubUrl': url,
                 'Name': manifest['name'],
                 'Description': manifest['description'],
                 'DeveloperName': manifest['developer_name'],
             }
         }
-    except (InvalidGithubUrlError, HTTPError, ManifestValidationError, ExtensionAlreadyExistsError) as e:
+    except (InvalidGithubUrlError, HTTPError, ManifestValidationError, AssertionError) as e:
         return ErrorResponse(e, 400)
 
 
-@app.route('/extensions/<id>', ['PATCH'])
+@app.route('/extensions', ['POST'])
 @jwt_auth_required
-def update_extension_route(id):
+def create_extension_route():
     """
-    Update and publish extension
+    Create extension
 
     Request params:
+    * GithubUrl: (string)
     * Name: (string) extension display name
     * Description: (string)
     * DeveloperName: (string)
+    * Images: (list) list of image URLs
 
     Response:
     * Extension object
@@ -124,17 +122,73 @@ def update_extension_route(id):
         assert data.get('Name'), 'Name cannot be empty'
         assert data.get('Description'), 'Description cannot be empty'
         assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
+        assert data.get('GithubUrl'), 'GithubUrl cannot be empty'
+        assert type(data.get('Images')) is list, 'Images must be a list of URLs'
+        assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
+
+        project_path = get_project_path(data['GithubUrl'])
+        manifest = get_manifest(project_path)
+        validate_manifest(manifest)
+
+        for image_url in data['Images']:
+            validate_image_url(image_url)
+
+        data = put_extension(User=user,
+                             GithubUrl=data['GithubUrl'],
+                             ProjectPath=project_path,
+                             Name=data['Name'],
+                             Description=data['Description'],
+                             DeveloperName=data['DeveloperName'],
+                             Images=data['Images'],
+                             Published=True)
+        return {'data': data}
+    except (AssertionError, ImageUrlValidationError, InvalidGithubUrlError, HTTPError, ManifestValidationError,
+            ExtensionAlreadyExistsError) as e:
+        return ErrorResponse(e, 400)
+
+
+@app.route('/extensions/<id>', ['PATCH'])
+@jwt_auth_required
+def update_extension_route(id):
+    """
+    Update extension
+
+    Request params:
+    * Name: (string) extension display name
+    * Description: (string)
+    * DeveloperName: (string)
+    * Images: (list) list of image URLs
+
+    Response:
+    * Extension object
+    """
+    user = request.get('REMOTE_USER')
+    data = request.json
+
+    try:
+        _verify_ext_auth(id)
+
+        assert data.get('Name'), 'Name cannot be empty'
+        assert data.get('Description'), 'Description cannot be empty'
+        assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
+        assert type(data.get('Images')) is list, 'Images must be a list of URLs'
+        assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
+
+        for image_url in data['Images']:
+            validate_image_url(image_url)
 
         data = update_extension(id,
                                 Name=data['Name'],
                                 Description=data['Description'],
                                 DeveloperName=data['DeveloperName'],
-                                Published=True)
+                                Images=data['Images'])
         return {'data': data}
     except ExtensionNotFoundError as e:
         return ErrorResponse(e, 404)
-    except AssertionError as e:
+    except (AssertionError, ImageUrlValidationError) as e:
         return ErrorResponse(e, 400)
+    except AuthError as e:
+        return ErrorResponse(e, 401)
 
 
 @app.route('/extensions/<id>', ['DELETE'])
@@ -143,29 +197,29 @@ def delete_extension_route(id):
     """
     Deletes extension by ID
     """
+    user = request.get('REMOTE_USER')
     try:
-        delete_extension(id, user=request.get('REMOTE_USER'))
-        delete_images(id)
+        ext = delete_extension(id, user=user)
     except ExtensionDoesntBelongToUserError as e:
         return ErrorResponse(e, 401)
 
 
-@app.route('/extensions/<id>/upload.html', ['GET'])
-def image_upload_html_route(id):
+@app.route('/upload-image.html', ['GET'])
+def upload_image_html_route():
     """
     HTML page with an upload form for testing
 
     Query params:
     * token: (string) authorization token
     """
-    return template('image_upload', ext_id=id, token=request.GET['token'], url_prefix=get_url_prefix())
+    return template('image_upload', token=request.GET['token'], url_prefix=get_url_prefix())
 
 
-@app.route('/extensions/<id>/images', ['POST'])
+@app.route('/upload-image', ['POST'])
 @jwt_auth_required
-def add_extension_image_route(id):
+def upload_image_route():
     """
-    Add extension image
+    Upload an image
 
     Request params:
     * Files uploaded as "multipart/form-data"
@@ -176,47 +230,15 @@ def add_extension_image_route(id):
 
     files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
     try:
-        ext = _verify_ext_auth(id)
         assert files, "Files were not provided"
-        if len(ext.get('Images', [])) + len(files) > max_images:
-            raise MaxImageLimitError('You cannot upload more than %s images' % max_images)
-        urls = upload_images(files, id)
-        data = add_extension_images(id, urls)
-        return {'data': data}
-    except ExtensionNotFoundError as e:
-        return ErrorResponse(e, 404)
+        if len(list(get_user_images(user))) + len(files) > max_images_per_uer:
+            raise MaxImageLimitError('You cannot upload more than %s images' % max_images_per_uer)
+        urls = upload_images(user, files)
+        return {'data': urls}
     except (AssertionError, MaxImageLimitError) as e:
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
         return ErrorResponse(e, 413)
-    except AuthError as e:
-        return ErrorResponse(e, 401)
-
-
-@app.route('/extensions/<id>/images/<image_idx>', ['DELETE'])
-@jwt_auth_required
-def delete_extension_image_route(id, image_idx):
-    """
-    Delete extension image
-
-    <code>image_idx</code> index of an image starting from 0
-
-    Response:
-    * Extension object
-    """
-    user = request.get('REMOTE_USER')
-    image_idx = int(image_idx)
-
-    try:
-        ext = _verify_ext_auth(id)
-        image_url = ext['Images'][image_idx]
-        data = remove_extension_image(id, image_idx)
-        delete_image(parse_s3_url(image_url)[1])
-        return {'data': data}
-    except (ExtensionNotFoundError, IndexError) as e:
-        return ErrorResponse(e, 404)
-    except AuthError as e:
-        return ErrorResponse(e, 401)
 
 
 def _verify_ext_auth(id):

@@ -47,9 +47,10 @@
 
     <h3>Add Extension Flow</h3>
     <ol>
-        <li><code>POST /extensions</code> with GithubUrl</li>
-        <li><code>POST /extensions/&lt;id&gt;/images</code> with up to 5 images as <code>multipart/form-data</code></li>
-        <li><code>PATCH /extensions/&lt;id&gt;</code> to mark it as published</li>
+        <li><code>GET /check-manifest?url=https://github.com...</code></li>
+        <li><code>POST /upload-image</code></li>
+        <li><code>POST /extensions</code></li>
+        <li><code>PATCH /extensions/&lt;id&gt;</code> (if needed)</li>
     </ol>
 
     <h3>Extension Object</h3>

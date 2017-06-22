@@ -4,3 +4,4 @@ __pycache__
 docker_env/
 remote_env.json
 .cache
+.ignore

@@ -18,28 +18,25 @@ def get_creation_date(table):
 
 @timeit
 @inject_extensions_table
-def put_extension(table, User, GithubUrl, ProjectPath):
+def put_extension(table, **item):
     """
-    :returns: (int) id of a newly added extension
+    :returns dict: Extension
     """
-    id = 'github-%s' % ProjectPath.replace('/', '-').lower()
+    id = 'github-%s' % item['ProjectPath'].replace('/', '-').lower()
     try:
-        table.put_item(Item={
+        item.update({
             'Part': 0,  # we want all the data to be in one partition, so partition key will always be 0
             'ID': id,
-            'User': User,
             'CreatedAt': datetime.datetime.utcnow().isoformat(),
-            'GithubUrl': GithubUrl,
-            'ProjectPath': ProjectPath,
-            'Published': False,
-            'Images': []
-        }, ConditionExpression='attribute_not_exists(Part) AND attribute_not_exists(ID)')
+        })
+        table.put_item(Item=item,
+                       ConditionExpression='attribute_not_exists(Part) AND attribute_not_exists(ID)')
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             raise ExtensionAlreadyExistsError('This extension already exists')
         raise
 
-    return id
+    return _del_unused_item_keys(item)
 
 
 @timeit
@@ -73,17 +70,22 @@ def delete_extension(table, id, user=None):
 
     :raises ExtensionDoesntBelongToUserError:
     """
-    kwargs = {'Key': {'Part': 0, 'ID': id}}
+    kwargs = {
+        'Key': {'Part': 0, 'ID': id},
+        'ReturnValues': 'ALL_OLD'
+    }
 
     if user:
         kwargs['ConditionExpression'] = Attr('User').eq(user)
 
     try:
-        table.delete_item(**kwargs)
+        ext = table.delete_item(**kwargs)
     except ClientError as e:
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             raise ExtensionDoesntBelongToUserError("Extension '%s' doesn't belong to user" % id)
         raise
+
+    return _del_unused_item_keys(ext['Attributes'])
 
 
 @timeit
