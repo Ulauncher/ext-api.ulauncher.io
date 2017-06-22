@@ -1,8 +1,8 @@
 import os
 import logging
 
-commit = 'DEV'
-deployed_on = 'Thu Jun 22 22:29:43 EEST 2017'
+commit = ''
+deployed_on = ''
 extensions_table_name = os.environ['EXTENSIONS_TABLE_NAME']
 ext_images_bucket_name = os.environ['EXT_IMAGES_BUCKET_NAME']
 
