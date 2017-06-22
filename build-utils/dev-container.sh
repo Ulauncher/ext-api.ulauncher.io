@@ -11,6 +11,7 @@ docker run \
     -p 8080:8080 \
     -it \
     --rm \
+    --env-file .aws \
     --env-file .env \
     --name ext-api \
     ulauncher/ext-api \

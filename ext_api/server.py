@@ -16,7 +16,7 @@ from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
-from ext_api.config import max_images_per_uer
+from ext_api.config import max_images_per_uer, commit, deployed_on
 
 
 app = default_app()
@@ -35,7 +35,8 @@ def api_doc():
     docs_exclude = ["/api-doc.html", "/<url:re:.*>"]
     colors = cycle('#fff #e3e4ed'.split())
     routes = [r for r in app.routes if r.rule not in docs_exclude]
-    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix())
+    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix(),
+                    commit=commit, deployed_on=deployed_on)
 
 
 @app.route('/extensions', ['GET'])

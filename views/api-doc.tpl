@@ -25,7 +25,13 @@
 
 <div class="content">
     <table>
-        <tr style="background-color:#CCCFDF"><th colspan="2">API Documentation</th></tr>
+        <tr style="background-color:#CCCFDF">
+            <th colspan="2">
+                API Documentation <br>
+                Commit SHA1 {{ commit }} <br>
+                Deployed on {{ deployed_on }}
+            </th>
+        </tr>
         <tr style="background-color:#CCCFDF"><th>ENDPOINT</th><th>DESCRIPTION</th></tr>
          % for color,resource in zip(colors,routes) :
             % docx = (resource.callback.__doc__ or '').strip().replace("\n","<br/>")
