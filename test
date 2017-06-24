@@ -2,4 +2,10 @@
 
 args=$(echo $@ | sed 's|/.*tests|tests|g')
 
+export AUTH0_DOMAIN=ulauncher.auth0.com
+export AUTH0_CLIENT_ID=AUTH0_CLIENT_ID
+export AUTH0_CLIENT_SECRET=AUTH0_CLIENT_SECRET
+export EXTENSIONS_TABLE_NAME=EXTENSIONS_TABLE_NAME
+export EXT_IMAGES_BUCKET_NAME=EXT_IMAGES_BUCKET_NAME
+
 eval "PYTHONPATH=`pwd` py.test --pep8 $args"
