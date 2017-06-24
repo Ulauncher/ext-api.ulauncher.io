@@ -6,7 +6,8 @@ cd ..
 sed -i "s/commit =.*/commit = '$TRAVIS_COMMIT'/g" ext_api/config.py
 sed -i "s/deployed_on =.*/deployed_on = '`date`'/g" ext_api/config.py
 
-cmd="virtualenv /var/docker_env"
+cmd="./test tests"
+cmd="$cmd && virtualenv /var/docker_env"
 cmd="$cmd && source /var/docker_env/bin/activate"
 cmd="$cmd && zappa update dev"
 if [ "$TRAVIS_BRANCH" == "master" ]; then

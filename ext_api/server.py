@@ -205,8 +205,8 @@ def delete_extension_route(id):
         return ErrorResponse(e, 401)
 
 
-@app.route('/upload-image.html', ['GET'])
-def upload_image_html_route():
+@app.route('/upload-images.html', ['GET'])
+def upload_images_html_route():
     """
     HTML page with an upload form for testing
 
@@ -216,11 +216,11 @@ def upload_image_html_route():
     return template('image_upload', token=request.GET['token'], url_prefix=get_url_prefix())
 
 
-@app.route('/upload-image', ['POST'])
+@app.route('/upload-images', ['POST'])
 @jwt_auth_required
-def upload_image_route():
+def upload_images_route():
     """
-    Upload an image
+    Upload images
 
     Request params:
     * Files uploaded as "multipart/form-data"

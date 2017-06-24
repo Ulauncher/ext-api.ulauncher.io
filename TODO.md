@@ -1,8 +1,8 @@
 # TODO
 
-1. Add support for pagination
-1. Add support for filtering/searching
 1. Delete images from S3 on extension delete
+1. Add support for filtering/searching
+1. Add support for pagination
 1. Add support for image resizing
 1. Cache GET requests with S3
 1. Set up authorizer when AWS implements [support optional token](https://forums.aws.amazon.com/thread.jspa?messageID=764080&#764080)  

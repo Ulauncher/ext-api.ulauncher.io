@@ -7,7 +7,7 @@ Source: https://gist.github.com/WebReflection/f04425ce4cfeb18d75236cb50255e4bc
 
 <form
   id="testForm"
-  action="{{ url_prefix }}/upload-image"
+  action="{{ url_prefix }}/upload-images"
   method="post"
   enctype="multipart/form-data"
 >

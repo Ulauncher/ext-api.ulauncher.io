@@ -2,6 +2,7 @@ import io
 import datetime
 import boto3
 from ext_api.config import ext_images_bucket_name, max_image_size
+from urllib.parse import urlparse
 
 s3 = boto3.resource('s3')
 image_bucket = s3.Bucket(ext_images_bucket_name)
@@ -39,12 +40,10 @@ def delete_image(key):
 
 
 def delete_images(urls, user_id):
-    """
-    TODO: incomplete
-    """
     objects = []
     for url in urls:
-        objects.append({'Key': obj.key})
+        (_, _, filename) = parse_image_url(url)
+        objects.append({'Key': '%s/%s' (user_id, filename)})
 
     if not objects:
         return
@@ -61,6 +60,19 @@ def delete_user_images(user_id):
         return
 
     image_bucket.delete_objects(Delete={'Objects': objects})
+
+
+def parse_image_url(url):
+    """
+    Returns tuple (bucket_name, user_id, image_name)
+    >>> "https://dev-ulauncher-ext-image.s3.amazonaws.com/github|1202543/2017-06-23T19:09:44.447649.png"
+    <<< ('dev-ulauncher-ext-image', 'github|1202543', '2017-06-23T19:09:44.447649.png')
+    """
+    res = urlparse(url)
+    bucket_name = res.hostname.split('.')[0]
+    user_id = res.path.split('/')[1]
+    filename = res.path.split('/')[2]
+    return (bucket_name, user_id, filename)
 
 
 def validate_image(fileobj):
