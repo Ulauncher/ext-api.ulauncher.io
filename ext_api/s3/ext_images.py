@@ -43,7 +43,7 @@ def delete_images(urls, user_id):
     objects = []
     for url in urls:
         (_, _, filename) = parse_image_url(url)
-        objects.append({'Key': '%s/%s' (user_id, filename)})
+        objects.append({'Key': '%s/%s' % (user_id, filename)})
 
     if not objects:
         return

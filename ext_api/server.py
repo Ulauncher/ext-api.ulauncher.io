@@ -10,7 +10,7 @@ from ext_api.db.extensions import (put_extension, update_extension, get_extensio
                                    ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
-from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images,
+from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
 from ext_api.helpers.logging import setup_logging
@@ -167,7 +167,7 @@ def update_extension_route(id):
     data = request.json
 
     try:
-        _verify_ext_auth(id)
+        ext = _verify_ext_auth(id)
 
         assert data.get('Name'), 'Name cannot be empty'
         assert data.get('Description'), 'Description cannot be empty'
@@ -177,6 +177,9 @@ def update_extension_route(id):
 
         for image_url in data['Images']:
             validate_image_url(image_url)
+
+        to_delete = set(ext['Images']) - set(data['Images'])
+        delete_images(to_delete, user)
 
         data = update_extension(id,
                                 Name=data['Name'],
@@ -200,8 +203,10 @@ def delete_extension_route(id):
     """
     user = request.get('REMOTE_USER')
     try:
-        ext = delete_extension(id, user=user)
-    except ExtensionDoesntBelongToUserError as e:
+        ext = _verify_ext_auth(id)
+        delete_images(ext['Images'], user)
+        delete_extension(id, user=user)
+    except (ExtensionDoesntBelongToUserError, AuthError) as e:
         return ErrorResponse(e, 401)
 
 

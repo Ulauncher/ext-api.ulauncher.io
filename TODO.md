@@ -1,6 +1,5 @@
 # TODO
 
-1. Delete images from S3 on extension delete
 1. Add support for filtering/searching
 1. Add support for pagination
 1. Add support for image resizing
