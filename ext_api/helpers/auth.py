@@ -1,12 +1,29 @@
 import os
 import jwt
 import json
+import urllib3
+from functools import lru_cache
 from bottle import request, response
 from ext_api.helpers.response import ErrorResponse
+from cryptography.x509 import load_pem_x509_certificate
+from cryptography.hazmat.backends import default_backend
 
-
+AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
 AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
-AUTH0_CLIENT_SECRET = os.environ['AUTH0_CLIENT_SECRET']
+
+http = urllib3.PoolManager()
+
+
+@lru_cache(maxsize=1)
+def get_signing_key():
+    """
+    get key and cache forever in memory
+    """
+    resp = http.request('GET', 'https://%s/pem' % AUTH0_DOMAIN)
+    if resp.status != 200:
+        raise Error('Could not download auth0 cert. %s' % resp.data)
+    cert_obj = load_pem_x509_certificate(resp.data, default_backend())
+    return cert_obj.public_key()
 
 
 def parse_token(token):
@@ -16,7 +33,7 @@ def parse_token(token):
             # this is an Authorization header. Take string after space
             token = token.split(' ')[1]
 
-        return jwt.decode(token, AUTH0_CLIENT_SECRET, audience=AUTH0_CLIENT_ID)
+        return jwt.decode(token, get_signing_key(), audience=AUTH0_CLIENT_ID)
     except Exception as e:
         raise AuthError('Unauthorized. %s' % e)
 

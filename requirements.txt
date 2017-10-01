@@ -2,3 +2,4 @@ zappa
 bottle
 pyjwt
 boto3
+cryptography
