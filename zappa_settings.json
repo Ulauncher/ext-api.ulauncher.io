@@ -7,8 +7,8 @@
     "debug": true,
     "keep_warm": false,
     "app_function": "ext_api.server.app",
-    "s3_bucket": "dev-ext-api-zappa",
-    "remote_env": "s3://dev-ext-api-config/remote_env.json"
+    "s3_bucket": "ext-api.zappa",
+    "remote_env": "s3://ext-api.config/dev.json"
   },
   "stg": {
     "project_name": "ext-api-zappa",
@@ -18,7 +18,18 @@
     "debug": true,
     "keep_warm": true,
     "app_function": "ext_api.server.app",
-    "s3_bucket": "stg-ext-api-zappa",
-    "remote_env": "s3://stg-ext-api-config/remote_env.json"
+    "s3_bucket": "ext-api.zappa",
+    "remote_env": "s3://ext-api.config/stg.json"
+  },
+  "prod": {
+    "project_name": "ext-api-zappa",
+    "apigateway_description": "ext-api.ulauncher.io",
+    "timeout_seconds": 5,
+    "memory_size": 128,
+    "debug": true,
+    "keep_warm": true,
+    "app_function": "ext_api.server.app",
+    "s3_bucket": "ext-api.zappa",
+    "remote_env": "s3://ext-api.config/prod.json"
   }
 }
