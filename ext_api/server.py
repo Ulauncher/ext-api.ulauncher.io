@@ -206,6 +206,7 @@ def delete_extension_route(id):
         ext = _verify_ext_auth(id)
         delete_images(ext['Images'], user)
         delete_extension(id, user=user)
+        response.status = 204
     except (ExtensionDoesntBelongToUserError, AuthError) as e:
         return ErrorResponse(e, 401)
 
