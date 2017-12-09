@@ -117,7 +117,7 @@ def remove_extension_image(table, id, image_idx):
 
 @timeit
 @inject_extensions_table
-def get_extensions(table, limit=10):
+def get_extensions(table, limit=100):
     response = table.query(
         IndexName='CreatedAt-LSI',
         Select='ALL_ATTRIBUTES',
@@ -131,7 +131,7 @@ def get_extensions(table, limit=10):
 
 @timeit
 @inject_extensions_table
-def get_user_extensions(table, user, limit=10):
+def get_user_extensions(table, user, limit=100):
     response = table.query(
         IndexName='User-LSI',
         Select='ALL_ATTRIBUTES',
