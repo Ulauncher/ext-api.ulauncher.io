@@ -5,6 +5,7 @@ services:
   ext-api:
     image: $IMAGE_FULL_NAME
     restart: always
+    container_name: ext-api-$ENV_NAME
     environment:
       - AUTH0_DOMAIN
       - AUTH0_CLIENT_ID

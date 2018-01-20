@@ -26,6 +26,10 @@ phases:
         if [ "$GIT_REF_TYPE" = "origin" ] && echo "master dev" | grep -q "$GIT_REF_NAME"; then
           export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
           aws s3api get-object --bucket ext-api.config --key "$GIT_REF_NAME.env" .env
+          ENV_NAME=dev
+          if [ "$GIT_REF_NAME" = "master" ]; then
+            ENV_NAME=prod
+          fi
 
           echo "Deploying..."
           mkdir $DOCKER_CERT_PATH
