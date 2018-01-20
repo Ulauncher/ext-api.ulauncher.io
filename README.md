@@ -10,7 +10,7 @@
     AWS_SECRET_ACCESS_KEY=<key>
     AWS_DEFAULT_REGION=us-east-1
     ```
-2. Create `remote_env.json` and upload it to any S3 bucket. Then change `remote_env` in `zappa_settings.json`
-2. `./build-utils/dev-container.sh`
-2. `pip install -r requirements.txt`
-3. `zappa deploy <env>`
+1. Create `remote_env.json` and upload it to any S3 bucket. Then change `remote_env` in `zappa_settings.json`
+1. `./build-utils/dev-container.sh`
+1. `pip install -r requirements.txt`
+1. `zappa deploy <env>`
