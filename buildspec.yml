@@ -42,16 +42,24 @@ phases:
           export DOCKER_HOST="tcp://home.gornostal.name:2376"
           export DOCKER_MACHINE_NAME="home"
 
+          # create $ENV_NAME dir and move docker-compose file in there
+          # so we can run multiple environments on the server
+          mkdir $ENV_NAME
+          cp docker-compose.yml .env $ENV_NAME
+          cd $ENV_NAME
+
           if [ -z "$STOP" ] && [ -z "$RESTART" ]; then
             echo "Pulling images..."
-            docker-compose --no-ansi -f docker-compose.yml pull
+            docker-compose --no-ansi pull
           fi
           echo "Stopping server..."
-          docker-compose --no-ansi -f docker-compose.yml down --remove-orphans
+          docker-compose --no-ansi down --remove-orphans
           if [ "$STOP" != "true" ]; then
             echo "Starting server..."
-            docker-compose --no-ansi -f docker-compose.yml up -d
+            docker-compose --no-ansi up -d
           fi
+
+          cd ../
 
           rm -rf $DOCKER_CERT_PATH
         fi
