@@ -5,9 +5,6 @@ env:
     IMAGE_NAME: ulauncher/ext-api
     DOCKER_CERT_PATH: "/tmp/docker-cert"
   parameter-store:
-    ACCESS_TOKEN: "/home.gornostal.name/ext-api.ulauncher.io/accessToken"
-    DOMAIN_NAME: "/home.gornostal.name/ext-api.ulauncher.io/domainName"
-    LETSENCRYPT_EMAIL: "/home.gornostal.name/ext-api.ulauncher.io/letsencryptEmail"
     CA: "/home.gornostal.name/docker/ca"
     CLIENT_CERT: "/home.gornostal.name/docker/client-cert"
     CLIENT_KEY: "/home.gornostal.name/docker/client-key"
@@ -15,8 +12,6 @@ env:
 phases:
   pre_build:
     commands:
-      - export DOCKER_LOGIN="$(aws ecr get-login --no-include-email --region us-east-1)"
-      - eval $DOCKER_LOGIN
       - export SOURCE_VERSION=$(git rev-parse HEAD)
       - export GIT_REF="$(git show-ref | grep "$SOURCE_VERSION" | grep -iv head | sort | tail -n 1)"
       # GIT_REF_TYPE can be either "origin" (for branches) or "tags"
@@ -26,11 +21,9 @@ phases:
   build:
     commands:
       - |
-        if [ "$GIT_REF_TYPE" = "origin" ] && [ "$GIT_REF_NAME" = "master" ]; then
-          cd mq/server
+        if [ "$GIT_REF_TYPE" = "origin" ] && echo "master dev" | grep -q "$GIT_REF_NAME"; then
           export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
-          docker build -t $IMAGE_FULL_NAME .
-          docker push $IMAGE_FULL_NAME
+          aws s3api get-object --bucket ext-api.config --key "$GIT_REF_NAME.env" .env
 
           echo "Deploying..."
           mkdir $DOCKER_CERT_PATH
@@ -42,8 +35,6 @@ phases:
           export DOCKER_TLS_VERIFY="1"
           export DOCKER_HOST="tcp://home.gornostal.name:2376"
           export DOCKER_MACHINE_NAME="home"
-
-          eval $DOCKER_LOGIN
 
           docker-compose -f docker-compose.yml pull
           docker-compose -f docker-compose.yml down --remove-orphans

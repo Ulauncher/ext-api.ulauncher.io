@@ -6,3 +6,4 @@ remote_env.json
 .cache
 .ignore
 .aws
+s3_env
