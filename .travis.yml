@@ -2,15 +2,31 @@ sudo: required
 language: python
 services:
   - docker
-install: "true"
+install:
+  - openssl aes-256-cbc -K $encrypted_ff3072ba7d7a_key -iv $encrypted_ff3072ba7d7a_iv -in .aws.enc -out .aws -d
 script:
   - |
-    if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-      openssl aes-256-cbc -K $encrypted_ff3072ba7d7a_key -iv $encrypted_ff3072ba7d7a_iv -in .aws.enc -out .aws -d
-      ./build-utils/zappa-update.sh
+    allowedBranches=(master dev)
+    if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+      TAG=$TRAVIS_PULL_REQUEST_BRANCH
+      COMMIT_SHA1=$TRAVIS_PULL_REQUEST_SHA
+    elif [ "$TRAVIS_PULL_REQUEST" = "false" ] && [[ " ${allowedBranches[*]} " == *" $TRAVIS_BRANCH "* ]]; then
+      TAG=$TRAVIS_BRANCH
+      PUSH=true
+      COMMIT_SHA1=$TRAVIS_COMMIT
+    elif [ ! -z "$TRAVIS_TAG" ]; then
+      TAG=$TRAVIS_TAG
+      PUSH=true
+      COMMIT_SHA1=$TRAVIS_TAG
+    fi
+
+    if [ ! -z "$TAG" ]; then
+      TAG="$TAG" \
+      PUSH="$PUSH" \
+      COMMIT_SHA1="$COMMIT_SHA1" \
+      ./bin/build-image.sh
     fi
 branches:
   only:
     - master
-    - stg
     - dev

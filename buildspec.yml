@@ -1,0 +1,53 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_NAME: ulauncher/ext-api
+    DOCKER_CERT_PATH: "/tmp/docker-cert"
+  parameter-store:
+    ACCESS_TOKEN: "/home.gornostal.name/ext-api.ulauncher.io/accessToken"
+    DOMAIN_NAME: "/home.gornostal.name/ext-api.ulauncher.io/domainName"
+    LETSENCRYPT_EMAIL: "/home.gornostal.name/ext-api.ulauncher.io/letsencryptEmail"
+    CA: "/home.gornostal.name/docker/ca"
+    CLIENT_CERT: "/home.gornostal.name/docker/client-cert"
+    CLIENT_KEY: "/home.gornostal.name/docker/client-key"
+
+phases:
+  pre_build:
+    commands:
+      - export DOCKER_LOGIN="$(aws ecr get-login --no-include-email --region us-east-1)"
+      - eval $DOCKER_LOGIN
+      - export SOURCE_VERSION=$(git rev-parse HEAD)
+      - export GIT_REF="$(git show-ref | grep "$SOURCE_VERSION" | grep -iv head | sort | tail -n 1)"
+      # GIT_REF_TYPE can be either "origin" (for branches) or "tags"
+      - export GIT_REF_TYPE="$(echo "$GIT_REF" | awk -F "/" '{print $(NF-1)}')"
+      # GIT_REF_NAME is either a branch or tag name
+      - export GIT_REF_NAME="$(echo "$GIT_REF" | awk -F "/" '{print $NF}')"
+  build:
+    commands:
+      - |
+        if [ "$GIT_REF_TYPE" = "origin" ] && [ "$GIT_REF_NAME" = "master" ]; then
+          cd mq/server
+          export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
+          docker build -t $IMAGE_FULL_NAME .
+          docker push $IMAGE_FULL_NAME
+
+          echo "Deploying..."
+          mkdir $DOCKER_CERT_PATH
+          echo "$CA" > $DOCKER_CERT_PATH/ca.pem
+          echo "$CLIENT_CERT" > $DOCKER_CERT_PATH/cert.pem
+          echo "$CLIENT_KEY" > $DOCKER_CERT_PATH/key.pem
+
+          echo "10.0.0.13 home.gornostal.name" >> /etc/hosts
+          export DOCKER_TLS_VERIFY="1"
+          export DOCKER_HOST="tcp://home.gornostal.name:2376"
+          export DOCKER_MACHINE_NAME="home"
+
+          eval $DOCKER_LOGIN
+
+          docker-compose -f docker-compose.yml pull
+          docker-compose -f docker-compose.yml down --remove-orphans
+          docker-compose -f docker-compose.yml up -d
+
+          rm -rf $DOCKER_CERT_PATH
+        fi

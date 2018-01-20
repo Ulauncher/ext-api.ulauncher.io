@@ -1,13 +1,20 @@
 FROM python:3.6
 
-MAINTAINER Aleksandr Gornostal <sanya.gornostal@gmail.com>
+MAINTAINER Aleksandr Gornostal <ulauncher.app@gmail.com>
 
-WORKDIR /var/task
+ARG COMMIT_SHA1
+ARG BUILD_DATE
+ENV COMMIT_SHA1 $COMMIT_SHA1
+ENV BUILD_DATE $BUILD_DATE
 
-COPY [ "requirements-dev.txt", "requirements.txt", "./" ]
+WORKDIR /var/app
+ENV PYTHONPATH=/var/app
+EXPOSE 8080
 
-RUN pip install -r requirements-dev.txt && \
-    pip install -r requirements.txt && \
-    bash -c "virtualenv /var/docker_env && source /var/docker_env/bin/activate && pip install -r requirements.txt"
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-ENV PYTHONPATH=/var/task
+COPY . .
+RUN ./test tests
+
+CMD ./ext_api/server.py

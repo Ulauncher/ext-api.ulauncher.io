@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import logging
 from json import dumps
 from itertools import cycle

@@ -1,5 +1,10 @@
-zappa
 bottle
+urllib3
 pyjwt
 boto3
 cryptography
+
+mock
+pytest
+pytest-pep8
+pytest-mock

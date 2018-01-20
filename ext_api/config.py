@@ -1,8 +1,8 @@
 import os
 import logging
 
-commit = ''
-deployed_on = ''
+commit = os.environ.get('COMMIT_SHA1', '')
+deployed_on = os.environ.get('BUILD_DATE', '')
 extensions_table_name = os.environ['EXTENSIONS_TABLE_NAME']
 ext_images_bucket_name = os.environ['EXT_IMAGES_BUCKET_NAME']
 

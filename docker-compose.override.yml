@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+
+  ext-api:
+    build: .
+    command: tail -F /none
+    container_name: ext-api
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/var/app
+      - ~/.bash_history:/root/.bash_history
