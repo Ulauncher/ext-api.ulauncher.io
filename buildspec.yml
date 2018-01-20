@@ -20,6 +20,8 @@ phases:
       - export GIT_REF_NAME="$(echo "$GIT_REF" | awk -F "/" '{print $NF}')"
   build:
     commands:
+      # Set env STOP=true to stop container
+      # Set env RESTART=true to restart container without pulling new image
       - |
         if [ "$GIT_REF_TYPE" = "origin" ] && echo "master dev" | grep -q "$GIT_REF_NAME"; then
           export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
@@ -36,9 +38,16 @@ phases:
           export DOCKER_HOST="tcp://home.gornostal.name:2376"
           export DOCKER_MACHINE_NAME="home"
 
-          docker-compose -f docker-compose.yml pull
+          if [ -z "$STOP" ] && [ -z "$RESTART" ]; then
+            echo "Pulling images..."
+            docker-compose -f docker-compose.yml pull
+          fi
+          echo "Stopping server..."
           docker-compose -f docker-compose.yml down --remove-orphans
-          docker-compose -f docker-compose.yml up -d
+          if [ "$STOP" != "true" ]; then
+            echo "Starting server..."
+            docker-compose -f docker-compose.yml up -d
+          fi
 
           rm -rf $DOCKER_CERT_PATH
         fi
