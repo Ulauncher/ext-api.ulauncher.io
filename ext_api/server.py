@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import logging
-from json import dumps
 from itertools import cycle
 from urllib.error import HTTPError
-from bottle import default_app, hook, request, response, template, FileUpload
+from bson.json_util import dumps
+from bottle import Bottle, request, response, template, FileUpload, JSONPlugin
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
-from ext_api.db.extensions import (put_extension, update_extension, get_extension, get_extensions,
-                                   get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
-                                   ExtensionAlreadyExistsError, ExtensionNotFoundError)
+from ext_api.models.extensions import (put_extension, update_extension, get_extension, get_extensions,
+                                       get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
+                                       ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, get_manifest, validate_manifest,
                             InvalidGithubUrlError, ManifestValidationError)
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
@@ -20,7 +20,8 @@ from ext_api.helpers.cors import allow_options_requests, add_options_route
 from ext_api.config import max_images_per_uer, commit, deployed_on
 
 
-app = default_app()
+app = Bottle(autojson=False)
+app.install(JSONPlugin(json_dumps=dumps))
 app.install(allow_options_requests)
 app.install(bottle_auth_plugin)
 add_options_route(app)

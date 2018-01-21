@@ -12,13 +12,13 @@
     .endpoint, .code { font-family: monospace; }
     .desc:first-line { font-weight: bold; }
     .endpoint.auth-required:before {
-        content: '✦';
+        content: '🔒';
         display: inline-block;
         position: absolute;
-        top: 4px;
+        top: 10px;
         right: 5px;
         font-weight: bold;
-        font-size: 20px;
+        font-size: 15px;
         color: #4d4d4d;
     }
 </style>
@@ -54,7 +54,7 @@
     </table>
     <br>
     <p>
-        ✦ Authorization header required (<code>Authorization:Bearer &lt;token&gt;</code>)
+        🔒 Authorization header required (<code>Authorization:Bearer &lt;token&gt;</code>)
     </p>
 
     <h3>Add Extension Flow</h3>
@@ -69,7 +69,7 @@
     <code>
         <pre>
 {
-    "CreatedAt": "(ISO UTC time)",
+    "CreatedAt": {"$date": (integer)},
     "Description": "(string)",
     "DeveloperName": "(string)",
     "Name": "(string)",

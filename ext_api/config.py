@@ -1,10 +1,13 @@
 import os
 import logging
 
-commit = os.environ.get('COMMIT_SHA1', '')
-deployed_on = os.environ.get('BUILD_DATE', '')
+commit = os.getenv('COMMIT_SHA1', '')
+deployed_on = os.getenv('BUILD_DATE', '')
 extensions_table_name = os.environ['EXTENSIONS_TABLE_NAME']
 ext_images_bucket_name = os.environ['EXT_IMAGES_BUCKET_NAME']
+
+mongodb_connection = os.environ['MONGODB_CONNECTION']
+db_name = os.environ['DB_NAME']
 
 five_mb = 5 * 1024 * 1024
 max_image_size = int(os.getenv('MAX_IMAGE_SIZE', five_mb))

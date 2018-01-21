@@ -3,6 +3,7 @@ urllib3
 pyjwt
 boto3
 cryptography
+pymongo
 
 mock
 pytest
