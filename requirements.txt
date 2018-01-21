@@ -1,11 +1,12 @@
-bottle
-urllib3
-pyjwt
-boto3
-cryptography
-pymongo
+bottle==0.12.13
+boto3==1.5.19
+cryptography==2.1.4
+pymongo==3.6.0
+python-dateutil==2.6.1
+urllib3==1.22
 
-mock
-pytest
-pytest-pep8
-pytest-mock
+mock==2.0.0
+pytest==3.3.2
+pytest-cache==1.0
+pytest-mock==1.6.3
+pytest-pep8==1.0.6

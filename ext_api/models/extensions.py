@@ -10,12 +10,14 @@ def put_extension(**item):
     """
     :returns dict: Extension
     """
-    id = 'github-%s' % item['ProjectPath'].replace('/', '-').lower()
+    if not item.get('ID'):
+        id = 'github-%s' % item['ProjectPath'].replace('/', '-').lower()
+        item.update({'ID': id})
+
+    if not item.get('CreatedAt'):
+        item.update({'CreatedAt': datetime.datetime.utcnow()})
+
     try:
-        item.update({
-            'ID': id,
-            'CreatedAt': datetime.datetime.utcnow()
-        })
         db.Extensions.insert_one(item)
     except DuplicateKeyError:
         raise ExtensionAlreadyExistsError('This extension already exists')
