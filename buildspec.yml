@@ -22,12 +22,16 @@ phases:
     commands:
       # Set env STOP=true to stop container
       # Set env RESTART=true to restart container without pulling new image
+      # Set env BRANCH_NAME
       - |
-        if [ "$GIT_REF_TYPE" = "origin" ] && echo "master dev" | grep -q "$GIT_REF_NAME"; then
-          export IMAGE_FULL_NAME=$IMAGE_NAME:$GIT_REF_NAME
-          aws s3api get-object --bucket ext-api.config --key "$GIT_REF_NAME.env" .env
+        if [ -z "$BRANCH_NAME" ]; then
+          BRANCH_NAME="$GIT_REF_NAME"
+        fi
+        if [ "$GIT_REF_TYPE" = "origin" ] && echo "master dev" | grep -q "$BRANCH_NAME"; then
+          export IMAGE_FULL_NAME=$IMAGE_NAME:$BRANCH_NAME
+          aws s3api get-object --bucket ext-api.config --key "$BRANCH_NAME.env" .env
           ENV_NAME=dev
-          if [ "$GIT_REF_NAME" = "master" ]; then
+          if [ "$BRANCH_NAME" = "master" ]; then
             ENV_NAME=prod
           fi
 
