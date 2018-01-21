@@ -1,5 +1,6 @@
 bottle==0.12.13
 boto3==1.5.19
+pyjwt
 cryptography==2.1.4
 pymongo==3.6.0
 python-dateutil==2.6.1
