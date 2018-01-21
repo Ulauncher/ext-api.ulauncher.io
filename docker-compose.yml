@@ -19,6 +19,7 @@ services:
       - VIRTUAL_HOST=$DOMAIN_NAME
       - LETSENCRYPT_HOST=$DOMAIN_NAME
       - LETSENCRYPT_EMAIL
+      - LOG_LEVEL
 
 networks:
   default:

@@ -16,6 +16,7 @@ services:
 
   mongodb:
     image: mongo:3.4.10
+    container_name: ext-mongodb
     restart: always
     ports:
       - 27017:27017

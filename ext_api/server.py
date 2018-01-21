@@ -14,7 +14,7 @@ from ext_api.github import (get_project_path, get_manifest, validate_manifest,
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
-from ext_api.helpers.logging import setup_logging
+from ext_api.db import check_migration_consistency
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
 from ext_api.config import max_images_per_uer, commit, deployed_on
@@ -26,7 +26,6 @@ app.install(allow_options_requests)
 app.install(bottle_auth_plugin)
 add_options_route(app)
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 response.content_type = 'application/json'
@@ -269,27 +268,10 @@ def _verify_ext_auth(id):
     return ext
 
 
-# @app.route('/environ', ['GET'])
-# @jwt_auth_required
-# def print_environ_route():
-
-#     def serializable(d):
-#         res = {}
-#         for k, v in d.items():
-#             if isinstance(v, (str, float, int, tuple, list)):
-#                 res[k] = v
-#             elif isinstance(v, dict):
-#                 res[k] = serializable(v)
-#             else:
-#                 res[k] = 'type(%s)' % type(v).__name__
-#         return res
-
-#     return serializable(request.environ)
-
-
 class MaxImageLimitError(Exception):
     pass
 
 
-if __name__ == '__main__':
+def run_server():
+    check_migration_consistency()
     app.run(host='0.0.0.0', port=8080, debug=True)

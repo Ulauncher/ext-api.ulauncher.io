@@ -71,7 +71,7 @@ def remove_extension_image(id, image_idx):
 
 @timeit
 def get_extensions(limit=100):
-    return db.Extensions.find({}).sort('CreatedAt', -1).limit(limit)
+    return db.Extensions.find({'Published': True}).sort('CreatedAt', -1).limit(limit)
 
 
 @timeit

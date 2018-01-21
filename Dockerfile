@@ -17,4 +17,4 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN ./test tests
 
-CMD ./ext_api/server.py
+ENTRYPOINT [ "./bin/entrypoint.sh" ]
