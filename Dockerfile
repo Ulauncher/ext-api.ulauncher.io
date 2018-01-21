@@ -15,6 +15,6 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .
-RUN ./test tests
+RUN ./test
 
 ENTRYPOINT [ "./bin/entrypoint.sh" ]
