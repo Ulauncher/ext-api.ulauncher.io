@@ -23,7 +23,7 @@ def get_manifest(repo_path):
 
 def validate_manifest(manifest):
     try:
-        assert str(manifest.get('manifest_version')) == '1', 'manifest_version should be "1"'
+        assert str(manifest.get('manifest_version')) in ['1', '2'], 'manifest_version should be "1" or "2"'
         assert str(manifest.get('api_version')) == '1', 'api_version should be "1"'
         assert manifest.get('name'), 'name is empty'
         assert manifest.get('description'), 'description is empty'
