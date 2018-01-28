@@ -27,6 +27,7 @@ def put_extension(**item):
 
 @timeit
 def update_extension(id, **data):
+    data['UpdatedAt'] = datetime.datetime.utcnow()
     result = db.Extensions.update_one({'ID': id}, {'$set': data})
 
     if result.modified_count == 0:
