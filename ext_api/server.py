@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import json
 from itertools import cycle
 from urllib.error import HTTPError
 from bson.json_util import dumps
@@ -14,6 +15,7 @@ from ext_api.github import (get_project_path, get_manifest, validate_manifest,
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
+from ext_api.helpers.http_client import http
 from ext_api.db import check_migration_consistency
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
@@ -247,6 +249,25 @@ def upload_images_route():
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
         return ErrorResponse(e, 413)
+
+
+@app.route('/misc/ulauncher-releases/<version>', ['GET'])
+def get_ulauncher_release(version):
+    """
+    Fetches Ulauncher release from Github by given git tag (version)
+
+    Note: This is necessary because Github API limits number of unauthenticated requests and it often blocks
+    IPs that Travis CI uses, so Ulauncher releases could fail
+    """
+    headers = {'User-Agent': 'curl/7.47.0'}
+    resp = http.request('GET', 'https://api.github.com/repos/ulauncher/ulauncher/releases', headers=headers)
+    if resp.status != 200:
+        return ErrorResponse(Exception('Could not get releases from Github. %s' % resp.data), 400)
+    releases = json.loads(resp.data)
+    try:
+        return next((r for r in releases if r['tag_name'] == version))
+    except StopIteration:
+        return ErrorResponse(Exception('Release version %s not found' % version), 404)
 
 
 def _verify_ext_auth(id):

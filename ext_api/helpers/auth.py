@@ -1,17 +1,14 @@
 import os
 import jwt
-import json
-import urllib3
 from functools import lru_cache
-from bottle import request, response
+from bottle import request
 from ext_api.helpers.response import ErrorResponse
+from ext_api.helpers.http_client import http
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 
 AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
 AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
-
-http = urllib3.PoolManager()
 
 
 @lru_cache(maxsize=1)
@@ -21,7 +18,7 @@ def get_signing_key():
     """
     resp = http.request('GET', 'https://%s/pem' % AUTH0_DOMAIN)
     if resp.status != 200:
-        raise Error('Could not download auth0 cert. %s' % resp.data)
+        raise Exception('Could not download auth0 cert. %s' % resp.data)
     cert_obj = load_pem_x509_certificate(resp.data, default_backend())
     return cert_obj.public_key()
 

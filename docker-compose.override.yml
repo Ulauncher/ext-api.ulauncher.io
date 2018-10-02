@@ -1,10 +1,11 @@
-version: '3.3'
+version: '2.4'
 
 services:
 
   ext-api:
     build: .
     command: tail -F /none
+    entrypoint: ""
     container_name: ext-api
     depends_on:
       - mongodb
