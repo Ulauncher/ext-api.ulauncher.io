@@ -2,6 +2,16 @@ version: '2.4'
 
 services:
 
+  ext-ui:
+    image: ulauncher/ext-ui:dev
+    container_name: ext-ui
+    environment:
+      - REACT_APP_AUTH0_DOMAIN=$AUTH0_DOMAIN
+      - REACT_APP_AUTH0_CLIENT_ID=$AUTH0_CLIENT_ID
+      - REACT_APP_API_BASE_URL=http://localhost:8080
+    ports:
+      - 3000:80
+
   ext-api:
     build: .
     command: tail -F /none
@@ -20,5 +30,5 @@ services:
     container_name: ext-mongodb
     restart: always
     volumes:
-      - "./.db/mongo/db:/data/db"
-      - "./.db/mongo/configdb:/data/configdb"
+      - ./.db/mongo/db:/data/db
+      - ./.db/mongo/configdb:/data/configdb
