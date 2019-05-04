@@ -5,5 +5,7 @@ docker_env/
 remote_env.json
 .cache
 .ignore
+.db
 .aws
 s3_env
+.mypy_cache/

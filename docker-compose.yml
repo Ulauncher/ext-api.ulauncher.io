@@ -3,7 +3,7 @@ version: '2.4'
 services:
 
   ext-api:
-    image: $IMAGE_FULL_NAME
+    image: ${IMAGE_FULL_NAME:-ulauncher-ext-api}
     restart: always
     environment:
       - AUTH0_DOMAIN
