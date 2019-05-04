@@ -16,8 +16,7 @@ def test_get_project_path__raises_InvalidGithubUrlError():
 
 def test_validate_manifest():
     manifest = {
-        'manifest_version': 1,
-        'api_version': '1',
+        'required_api_version': '1',
         'name': 'name',
         'description': 'description',
         'developer_name': 'developer_name',
