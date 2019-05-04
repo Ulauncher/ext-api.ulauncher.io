@@ -58,7 +58,7 @@ def list_migrations():
     versions = []
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     for migration in os.listdir(os.path.join(path, 'db_migrations')):
-        if re.match('\d+\.py$', migration):
+        if re.match(r'\d+\.py$', migration):
             ver = int(migration[:-3])
             versions.append((ver, migration))
     versions.sort()

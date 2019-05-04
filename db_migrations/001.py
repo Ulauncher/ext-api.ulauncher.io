@@ -1,5 +1,5 @@
-from ext_api.db import db
 from datetime import datetime
+from ext_api.db import db
 
 
 __version__ = 1

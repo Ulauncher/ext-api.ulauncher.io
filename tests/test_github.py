@@ -1,6 +1,5 @@
 import pytest
-from ext_api.github import (get_project_path, InvalidGithubUrlError, get_manifest, validate_manifest,
-                            ManifestValidationError)
+from ext_api.github import get_project_path, InvalidGithubUrlError, validate_manifest, ManifestValidationError
 
 
 def test_get_project_path__returns_path():
