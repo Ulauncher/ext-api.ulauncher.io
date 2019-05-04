@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 response.content_type = 'application/json'
 
+# pylint: disable=no-member,unsubscriptable-object
+
 
 @app.route('/api-doc.html', method=['GET'])
 def api_doc():
@@ -127,7 +129,8 @@ def create_extension_route():
         assert data.get('Description'), 'Description cannot be empty'
         assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
         assert data.get('GithubUrl'), 'GithubUrl cannot be empty'
-        assert type(data.get('Images')) is list, 'Images must be a list of URLs'
+        assert isinstance(data.get('Images'), list), 'Images must be a list of URLs'
+        # pylint: disable=len-as-condition
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         project_path = get_project_path(data['GithubUrl'])
@@ -175,7 +178,8 @@ def update_extension_route(id):
         assert data.get('Name'), 'Name cannot be empty'
         assert data.get('Description'), 'Description cannot be empty'
         assert data.get('DeveloperName'), 'DeveloperName cannot be empty'
-        assert type(data.get('Images')) is list, 'Images must be a list of URLs'
+        assert isinstance(data.get('Images'), list), 'Images must be a list of URLs'
+        # pylint: disable=len-as-condition
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         for image_url in data['Images']:
@@ -198,6 +202,7 @@ def update_extension_route(id):
         return ErrorResponse(e, 401)
 
 
+# pylint: disable=inconsistent-return-statements
 @app.route('/extensions/<id>', ['DELETE'])
 @jwt_auth_required
 def delete_extension_route(id):

@@ -1,8 +1,9 @@
 import io
 import datetime
+from urllib.parse import urlparse
+
 import boto3
 from ext_api.config import ext_images_bucket_name, max_image_size
-from urllib.parse import urlparse
 
 s3 = boto3.resource('s3')
 image_bucket = s3.Bucket(ext_images_bucket_name)

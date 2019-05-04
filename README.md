@@ -1,4 +1,13 @@
-# Env Setup
+# [API for Extensions Website](http://ext.ulauncher.io/)
+
+This API server is written in Python using bottle, boto3 libraries
+
+## Code Contribution
+
+Any code contributions are welcomed as long as they are discussed in [Github Issues](https://github.com/Ulauncher/ext-api.ulauncher.io/issues) with maintainers.
+Be aware that if you decided to change something and submit a PR on your own, it may not be accepted.
+
+# Setup Development Environment
 
 1. Sign up for auth0.com account and create an application (see instructions below)
 1. Sign up for AWS account and create a user with limited access (see below)
@@ -28,7 +37,7 @@
 
 In order to access Mongodb run `docker exec -it ext-mongodb mongo ulauncher`
 
-# How to create an auth0 application
+# How to Create Auth0 Application
 
 1. After you sign up for auth0 account, click large button Create Application
 1. Choose a name (e.g. ulauncher ext-api)
@@ -39,7 +48,7 @@ In order to access Mongodb run `docker exec -it ext-mongodb mongo ulauncher`
 1. Click on Github and turn it on
 1. In the Popup window switch to Applications tab and enable Github connection for your application
 
-# How to create and configure an AWS user
+# How to Create And Configure an AWS User
 
 1. Choose IAM in Services menu
 1. Go to Users and click Add User

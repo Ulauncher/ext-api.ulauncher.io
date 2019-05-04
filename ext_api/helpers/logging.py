@@ -1,8 +1,5 @@
-import os
-import sys
 import logging
 import time
-from random import randint
 from functools import wraps
 
 from ext_api.config import log_level
