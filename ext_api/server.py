@@ -10,8 +10,10 @@ from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthErro
 from ext_api.models.extensions import (put_extension, update_extension, get_extension, get_extensions,
                                        get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
                                        ExtensionAlreadyExistsError, ExtensionNotFoundError)
-from ext_api.github import (get_project_path, get_manifest, validate_manifest,
-                            InvalidGithubUrlError, ManifestValidationError)
+from ext_api.github import (get_project_path, InvalidGithubUrlError,
+                            get_master_json,
+                            validate_manifest, ManifestValidationError,
+                            validate_versions, VersionsValidationError)
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
@@ -90,7 +92,7 @@ def check_ext_manifest_route():
         url = request.GET.get('url')
         assert url, 'query argument "url" cannot be empty'
         project_path = get_project_path(url)
-        manifest = get_manifest(project_path)
+        manifest = get_master_json(project_path, 'manifest')
         validate_manifest(manifest)
 
         return {
@@ -134,8 +136,10 @@ def create_extension_route():
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         project_path = get_project_path(data['GithubUrl'])
-        manifest = get_manifest(project_path)
+        manifest = get_master_json(project_path, 'manifest')
         validate_manifest(manifest)
+        versions = get_master_json(project_path, 'versions')
+        validate_versions(versions)
 
         for image_url in data['Images']:
             validate_image_url(image_url)
@@ -147,10 +151,11 @@ def create_extension_route():
                              Description=data['Description'],
                              DeveloperName=data['DeveloperName'],
                              Images=data['Images'],
+                             SupportedVersions=versions,
                              Published=True)
         return {'data': data}
     except (AssertionError, ImageUrlValidationError, InvalidGithubUrlError, HTTPError, ManifestValidationError,
-            ExtensionAlreadyExistsError) as e:
+            VersionsValidationError, ExtensionAlreadyExistsError) as e:
         return ErrorResponse(e, 400)
 
 
