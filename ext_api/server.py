@@ -11,9 +11,8 @@ from ext_api.models.extensions import (put_extension, update_extension, get_exte
                                        get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
                                        ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, InvalidGithubUrlError,
-                            get_master_json,
-                            validate_manifest, ManifestValidationError,
-                            validate_versions, VersionsValidationError)
+                            get_json, get_latest_version_commit,
+                            validate_manifest, ProjectValidationError)
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
 from ext_api.helpers.aws import get_url_prefix
@@ -75,11 +74,11 @@ def get_extension_route(id):
         return ErrorResponse(e, 404)
 
 
-@app.route('/check-manifest', ['GET'])
+@app.route('/validate-project', ['GET'])
 @jwt_auth_required
-def check_ext_manifest_route():
+def validate_project():
     """
-    Check extension manifest
+    Checks that versions.json file is valid
 
     Query params:
     * url: string. Example https://github.com/user/project
@@ -92,7 +91,9 @@ def check_ext_manifest_route():
         url = request.GET.get('url')
         assert url, 'query argument "url" cannot be empty'
         project_path = get_project_path(url)
-        manifest = get_master_json(project_path, 'manifest')
+        versions = get_json(project_path, 'master', 'versions')
+        commit_or_branch = get_latest_version_commit(versions)
+        manifest = get_json(project_path, commit_or_branch, 'manifest')
         validate_manifest(manifest)
 
         return {
@@ -103,7 +104,7 @@ def check_ext_manifest_route():
                 'DeveloperName': manifest['developer_name'],
             }
         }
-    except (InvalidGithubUrlError, HTTPError, ManifestValidationError, AssertionError) as e:
+    except (InvalidGithubUrlError, HTTPError, ProjectValidationError, AssertionError) as e:
         return ErrorResponse(e, 400)
 
 
@@ -136,10 +137,11 @@ def create_extension_route():
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         project_path = get_project_path(data['GithubUrl'])
-        manifest = get_master_json(project_path, 'manifest')
+        versions = get_json(project_path, 'master', 'versions')
+        versions_only = [v['required_api_version'] for v in versions]
+        commit_or_branch = get_latest_version_commit(versions)
+        manifest = get_json(project_path, commit_or_branch, 'manifest')
         validate_manifest(manifest)
-        versions = get_master_json(project_path, 'versions')
-        validate_versions(versions)
 
         for image_url in data['Images']:
             validate_image_url(image_url)
@@ -151,11 +153,11 @@ def create_extension_route():
                              Description=data['Description'],
                              DeveloperName=data['DeveloperName'],
                              Images=data['Images'],
-                             SupportedVersions=versions,
+                             SupportedVersions=versions_only,
                              Published=True)
         return {'data': data}
-    except (AssertionError, ImageUrlValidationError, InvalidGithubUrlError, HTTPError, ManifestValidationError,
-            VersionsValidationError, ExtensionAlreadyExistsError) as e:
+    except (AssertionError, ImageUrlValidationError, InvalidGithubUrlError, HTTPError,
+            ProjectValidationError, ExtensionAlreadyExistsError) as e:
         return ErrorResponse(e, 400)
 
 

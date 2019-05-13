@@ -1,0 +1,12 @@
+{
+    "search.exclude": {
+        ".mypy_cache": true,
+        ".pytest_cache": true
+    },
+    "files.exclude": {
+        ".cache": true,
+        ".db": true,
+        ".mypy_cache": true,
+        ".pytest_cache": true
+    }
+}

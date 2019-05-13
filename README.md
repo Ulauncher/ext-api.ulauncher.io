@@ -28,6 +28,7 @@ Be aware that if you decided to change something and submit a PR on your own, it
     AWS_DEFAULT_REGION=us-east-1
     ```
 1. `docker network create webproxy`
+1. `docker-compose pull` (run this if you ran `docker-compose up` more than a day ago)
 1. `docker-compose up -d`
 1. `docker exec -it ext-api bash`
 1. `./app.py init_db`
