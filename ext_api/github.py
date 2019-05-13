@@ -23,7 +23,7 @@ def get_json(repo_path, commit, blob_path):
         response = urlopen(url)
     except HTTPError as e:
         if e.status == 404:
-            raise ProjectValidationError('Unable to find file "%s.json" in branch "%s"' % (blob_path, commit))
+            raise JsonFileNotFoundError('Unable to find file "%s.json" in branch "%s"' % (blob_path, commit))
         raise
     return json.load(response)
 
@@ -71,6 +71,10 @@ class InvalidGithubUrlError(Exception):
 
 
 class ProjectValidationError(Exception):
+    pass
+
+
+class JsonFileNotFoundError(ProjectValidationError):
     pass
 
 

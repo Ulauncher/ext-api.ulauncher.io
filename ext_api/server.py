@@ -10,7 +10,7 @@ from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthErro
 from ext_api.models.extensions import (put_extension, update_extension, get_extension, get_extensions,
                                        get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
                                        ExtensionAlreadyExistsError, ExtensionNotFoundError)
-from ext_api.github import (get_project_path, InvalidGithubUrlError,
+from ext_api.github import (get_project_path, InvalidGithubUrlError, JsonFileNotFoundError,
                             get_json, get_latest_version_commit,
                             validate_manifest, ProjectValidationError)
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
@@ -91,8 +91,11 @@ def validate_project():
         url = request.GET.get('url')
         assert url, 'query argument "url" cannot be empty'
         project_path = get_project_path(url)
-        versions = get_json(project_path, 'master', 'versions')
-        commit_or_branch = get_latest_version_commit(versions)
+        try:
+            versions = get_json(project_path, 'master', 'versions')
+            commit_or_branch = get_latest_version_commit(versions)
+        except JsonFileNotFoundError:
+            commit_or_branch = 'master'
         manifest = get_json(project_path, commit_or_branch, 'manifest')
         validate_manifest(manifest)
 
@@ -137,9 +140,14 @@ def create_extension_route():
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         project_path = get_project_path(data['GithubUrl'])
-        versions = get_json(project_path, 'master', 'versions')
-        versions_only = [v['required_api_version'] for v in versions]
-        commit_or_branch = get_latest_version_commit(versions)
+        try:
+            versions = get_json(project_path, 'master', 'versions')
+            versions_only = [v['required_api_version'] for v in versions]
+            commit_or_branch = get_latest_version_commit(versions)
+        except JsonFileNotFoundError:
+            commit_or_branch = 'master'
+            versions_only = ['^1.0.0']
+
         manifest = get_json(project_path, commit_or_branch, 'manifest')
         validate_manifest(manifest)
 
