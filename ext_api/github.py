@@ -1,7 +1,21 @@
 import re
 import json
-from urllib.request import urlopen
+import base64
+import logging
+from urllib.request import urlopen, Request
 from urllib.error import HTTPError
+
+from ext_api.config import github_api_token, github_api_user
+
+logger = logging.getLogger(__name__)
+
+
+def create_authenticated_request(url):
+    req = Request(url)
+    credentials = ('%s:%s' % (github_api_user, github_api_token))
+    encoded_credentials = base64.b64encode(credentials.encode('ascii'))
+    req.add_header('Authorization', 'Basic %s' % encoded_credentials.decode("ascii"))
+    return req
 
 
 def get_project_path(github_url):
@@ -19,12 +33,14 @@ def get_json(repo_path, commit, blob_path):
     Raises ProjectValidationError
     """
     url = 'https://raw.githubusercontent.com/%s/%s/%s.json' % (repo_path, commit, blob_path)
+    req = create_authenticated_request(url)
     try:
-        response = urlopen(url)
+        response = urlopen(req)
     except HTTPError as e:
         if e.status == 404:
             raise JsonFileNotFoundError('Unable to find file "%s.json" in branch "%s"' % (blob_path, commit))
         raise
+    logger.debug('X-RateLimit-Remaining: %s', response.headers.get('X-RateLimit-Remaining'))
     return json.load(response)
 
 

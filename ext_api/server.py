@@ -20,7 +20,7 @@ from ext_api.helpers.http_client import http
 from ext_api.db import check_migration_consistency
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
-from ext_api.config import max_images_per_uer, commit, deployed_on
+from ext_api.config import max_images_per_uer, commit, deployed_on, github_api_token, github_api_user
 
 
 app = Bottle(autojson=False)
@@ -315,4 +315,8 @@ class MaxImageLimitError(Exception):
 
 def run_server():
     check_migration_consistency()
+    if not github_api_token or not github_api_user:
+        logger.warning('GITHUB_API_USER and GITHUB_API_TOKEN env vars are not set. '
+                       'For unauthenticated requests, the rate limit allows for up to 60 requests per hour '
+                       '(see https://developer.github.com/v3/#rate-limiting)')
     app.run(host='0.0.0.0', port=8080, debug=True)

@@ -6,6 +6,9 @@ deployed_on = os.getenv('BUILD_DATE', '')
 extensions_table_name = os.environ['EXTENSIONS_TABLE_NAME']
 ext_images_bucket_name = os.environ['EXT_IMAGES_BUCKET_NAME']
 
+github_api_user = os.getenv('GITHUB_API_USER')
+github_api_token = os.getenv('GITHUB_API_TOKEN')
+
 mongodb_connection = os.environ['MONGODB_CONNECTION']
 db_name = os.environ['DB_NAME']
 
