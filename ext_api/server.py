@@ -22,12 +22,14 @@ from ext_api.db import check_migration_consistency
 from ext_api.helpers.response import ErrorResponse
 from ext_api.helpers.cors import allow_options_requests, add_options_route
 from ext_api.config import max_images_per_uer, commit, deployed_on, github_api_token, github_api_user
+from ext_api.helpers.logging_utils import bottle_request_logger
 
 
 app = Bottle(autojson=False)
 app.install(JSONPlugin(json_dumps=dumps))
 app.install(allow_options_requests)
 app.install(bottle_auth_plugin)
+app.install(bottle_request_logger)
 add_options_route(app)
 
 logger = logging.getLogger(__name__)

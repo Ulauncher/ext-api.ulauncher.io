@@ -26,6 +26,7 @@ services:
   ext-api-sync-versions:
     image: ${IMAGE_FULL_NAME:-ulauncher-ext-api}
     restart: always
+    command: sync_ext_versions
     environment:
       - AUTH0_DOMAIN
       - AUTH0_CLIENT_ID

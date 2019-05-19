@@ -1,6 +1,12 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -ex
 
 cd `dirname $0`/..
 
-./app.py init_db
-./app.py run_server
+if [[ -z "$@" ]]; then
+    ./app.py init_db
+    exec ./app.py run_server
+fi
+
+exec ./app.py $@
