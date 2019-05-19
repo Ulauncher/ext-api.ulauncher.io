@@ -4,6 +4,7 @@ import json
 from itertools import cycle
 from urllib.error import HTTPError
 from bson.json_util import dumps
+from semver import satisfies
 from bottle import Bottle, request, response, template, FileUpload, JSONPlugin
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
@@ -49,8 +50,23 @@ def api_doc():
 def get_extensions_route():
     """
     Returns all extensions
+
+    Query params:
+    * api_version: string. Version of Ulauncher Extension API. Returns all extensions by default
+
     """
-    return {'data': get_extensions()}
+    result = []
+
+    # filter by required API version
+    api_version = request.GET.get('api_version')
+    for ext in get_extensions():
+        if not api_version:
+            result.append(ext)
+        for req_version in ext['SupportedVersions']:
+            if satisfies(api_version, req_version):
+                result.append(ext)
+
+    return {'data': result}
 
 
 @app.route('/my/extensions', ['GET'])

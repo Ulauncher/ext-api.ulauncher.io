@@ -73,12 +73,12 @@ def remove_extension_image(id, image_idx):
 
 
 @timeit
-def get_extensions(limit=100):
+def get_extensions(limit=1000):
     return db.Extensions.find({'Published': True}).sort('CreatedAt', -1).limit(limit)
 
 
 @timeit
-def get_user_extensions(user, limit=100):
+def get_user_extensions(user, limit=1000):
     return db.Extensions.find({'User': user}).sort('CreatedAt', -1).limit(limit)
 
 
