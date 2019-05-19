@@ -1,15 +1,15 @@
 bottle==0.12.13
-boto3==1.5.19
+boto3==1.9.151
 pyjwt
 cryptography==2.3
 pymongo==3.6.0
 python-dateutil==2.6.1
-urllib3==1.22
+urllib3==1.25.2
 dnspython==1.15.0
 certifi==2018.8.24
 
 mock==2.0.0
-pytest==4.0.2
-pytest-mock==1.10.0
+pytest==4.5.0
+pytest-mock==1.10.4
 pylint==2.3.1
 flake8==3.7.7

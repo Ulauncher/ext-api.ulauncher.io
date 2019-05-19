@@ -27,7 +27,7 @@ def timeit(fn):
         result = fn(*args, **kw)
         te = time.time()
 
-        logger.info('func:%r args:[%r, %r] took: %2.4f sec' % (fn.__name__, args, kw, te - ts))
+        logger.debug('func:%r args:[%r, %r] took: %2.4f sec', fn.__name__, args, kw, te - ts)
 
         return result
 

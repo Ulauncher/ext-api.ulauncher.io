@@ -2,7 +2,7 @@ import datetime
 from pymongo.errors import DuplicateKeyError
 
 from ext_api.db import db
-from ext_api.helpers.logging import timeit
+from ext_api.helpers.logging_utils import timeit
 
 
 @timeit

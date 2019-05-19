@@ -1,8 +1,29 @@
-version: '2.4'
+version: '3.4'
 
 services:
 
   ext-api:
+    image: ${IMAGE_FULL_NAME:-ulauncher-ext-api}
+    restart: always
+    environment:
+      - AUTH0_DOMAIN
+      - AUTH0_CLIENT_ID
+      - AUTH0_CLIENT_SECRET
+      - GITHUB_API_USER
+      - GITHUB_API_TOKEN
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION
+      - EXTENSIONS_TABLE_NAME
+      - EXT_IMAGES_BUCKET_NAME
+      - MONGODB_CONNECTION
+      - DB_NAME
+      - VIRTUAL_HOST=$DOMAIN_NAME
+      - LETSENCRYPT_HOST=$DOMAIN_NAME
+      - LETSENCRYPT_EMAIL
+      - LOG_LEVEL
+
+  ext-api-sync-versions:
     image: ${IMAGE_FULL_NAME:-ulauncher-ext-api}
     restart: always
     environment:

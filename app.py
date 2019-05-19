@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import argparse
-from ext_api.helpers.logging import setup_logging
+from ext_api.helpers.logging_utils import setup_logging
 from ext_api.server import run_server
 from ext_api.db import init_db
+from ext_api.sync_ext_versions import sync_ext_versions
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Application management commands')
+    parser = argparse.ArgumentParser(description='Application commands')
     tasks = {
         'run_server': run_server,
-        'init_db': init_db
+        'init_db': init_db,
+        'sync_ext_versions': sync_ext_versions
     }
     parser.add_argument('cmd', type=str, choices=tasks.keys(), help='Command')
     args = parser.parse_args()
