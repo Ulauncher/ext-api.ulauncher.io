@@ -62,7 +62,7 @@ def get_extensions_route():
     for ext in get_extensions():
         if not api_version:
             result.append(ext)
-        for req_version in ext['SupportedVersions']:
+        for req_version in ext.get('SupportedVersions', []):
             if satisfies(api_version, req_version):
                 result.append(ext)
 
