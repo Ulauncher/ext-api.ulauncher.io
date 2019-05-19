@@ -12,7 +12,7 @@ from ext_api.models.extensions import (put_extension, update_extension, get_exte
                                        get_user_extensions, delete_extension, ExtensionDoesntBelongToUserError,
                                        ExtensionAlreadyExistsError, ExtensionNotFoundError)
 from ext_api.github import (get_project_path, InvalidGithubUrlError, JsonFileNotFoundError,
-                            get_json, get_latest_version_commit,
+                            get_json, get_latest_version_commit, get_repo_info,
                             validate_manifest, ProjectValidationError)
 from ext_api.s3.ext_images import (upload_images, validate_image_url, get_user_images, delete_images,
                                    ImageUrlValidationError, FileTooLargeError)
@@ -35,6 +35,9 @@ add_options_route(app)
 logger = logging.getLogger(__name__)
 
 response.content_type = 'application/json'
+
+allowed_sort_by = ['GithubStars', 'CreatedAt']
+allowed_sort_order = ['-1', '1']
 
 # pylint: disable=no-member,unsubscriptable-object
 
@@ -61,7 +64,15 @@ def get_extensions_route():
 
     # filter by required API version
     api_version = request.GET.get('api_version')
-    for ext in get_extensions():
+    try:
+        sort_by = request.GET.get('sort_by') or allowed_sort_by[0]
+        sort_order = request.GET.get('sort_order') or allowed_sort_order[0]
+        assert sort_by in allowed_sort_by, 'allowed sorty_by: ' + ', '.join(allowed_sort_by)
+        assert sort_order in allowed_sort_order, 'allowed sort_order: ' + ', '.join(map(str, allowed_sort_order))
+    except AssertionError as e:
+        return ErrorResponse(e, 400)
+
+    for ext in get_extensions(sort_by=sort_by, sort_order=int(sort_order)):
         if not api_version:
             result.append(ext)
         for req_version in ext.get('SupportedVersions', []):
@@ -109,6 +120,7 @@ def validate_project():
         url = request.GET.get('url')
         assert url, 'query argument "url" cannot be empty'
         project_path = get_project_path(url)
+        get_repo_info(project_path)
         try:
             versions = get_json(project_path, 'master', 'versions')
             commit_or_branch = get_latest_version_commit(versions)
@@ -158,6 +170,7 @@ def create_extension_route():
         assert 0 < len(data['Images']) < 6, 'You must upload at least 1 (max 5) screenshot of your extension'
 
         project_path = get_project_path(data['GithubUrl'])
+        info = get_repo_info(project_path)
         try:
             versions = get_json(project_path, 'master', 'versions')
             versions_only = [v['required_api_version'] for v in versions]
@@ -180,6 +193,7 @@ def create_extension_route():
                              DeveloperName=data['DeveloperName'],
                              Images=data['Images'],
                              SupportedVersions=versions_only,
+                             GithubStars=info['stargazers_count'],
                              Published=True)
         return {'data': data}
     except (AssertionError, ImageUrlValidationError, InvalidGithubUrlError, HTTPError,

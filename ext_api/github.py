@@ -44,6 +44,23 @@ def get_json(repo_path, commit, blob_path):
     return json.load(response)
 
 
+def get_repo_info(repo_path):
+    """
+    Raises urllib.error.HTTPError
+    Raises ProjectValidationError
+    """
+    url = 'https://api.github.com/repos/%s' % repo_path
+    req = create_authenticated_request(url)
+    try:
+        response = urlopen(req)
+    except HTTPError as e:
+        if e.status == 404:
+            raise ProjectNotFoundError('Github project not found: https://github.com/%s' % repo_path)
+        raise
+    logger.debug('X-RateLimit-Remaining: %s', response.headers.get('X-RateLimit-Remaining'))
+    return json.load(response)
+
+
 def validate_manifest(manifest):
     try:
         assert manifest.get('name'), 'name is empty'
@@ -87,6 +104,10 @@ class InvalidGithubUrlError(Exception):
 
 
 class ProjectValidationError(Exception):
+    pass
+
+
+class ProjectNotFoundError(ProjectValidationError):
     pass
 
 

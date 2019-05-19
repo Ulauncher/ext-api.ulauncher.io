@@ -33,6 +33,14 @@ services:
     entrypoint: ""
     restart: "no"
 
+  # don't run anything in this container
+  ext-api-sync-github-stars:
+    build: .
+    container_name: ext-api-sync-github-stars
+    command: "true"
+    entrypoint: ""
+    restart: "no"
+
   mongodb:
     image: mongo:4.0.9
     container_name: ext-mongodb

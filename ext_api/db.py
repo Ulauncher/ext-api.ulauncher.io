@@ -14,7 +14,7 @@ client = MongoClient(mongodb_connection)
 db = client[db_name]
 logger = logging.getLogger(__name__)
 
-__version__ = 1
+__version__ = 2
 
 
 class DbMigrationError(Exception):
@@ -45,10 +45,13 @@ def init_db():
         db_ver = get_last_version()
         if db_ver < __version__:
             run_migrations(db_ver, __version__)
+            logger.info("DB schema updated")
+        else:
+            logger.info("DB schema is up-to-date")
     else:
         create_indexes()
         db.Migrations.insert({'Version': __version__, 'CreatedAt': datetime.utcnow()})
-    logger.info("DB schema updated")
+        logger.info("DB schema updated")
 
 
 def list_migrations():
@@ -95,3 +98,4 @@ def create_indexes():
     db.Extensions.create_index('ID', unique=True)
     db.Extensions.create_index('User')
     db.Extensions.create_index([('Published', 1), ('CreatedAt', -1)])
+    db.Extensions.create_index([('Published', 1), ('GithubStars', -1)])
