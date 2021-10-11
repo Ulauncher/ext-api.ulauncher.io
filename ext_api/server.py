@@ -137,7 +137,7 @@ def validate_project():
                 'DeveloperName': manifest['developer_name'],
             }
         }
-    except (InvalidGithubUrlError, HTTPError, ProjectValidationError, AssertionError) as e:
+    except (InvalidGithubUrlError, HTTPError, ProjectValidationError, AssertionError, json.JSONDecodeError) as e:
         return ErrorResponse(e, 400)
 
 
