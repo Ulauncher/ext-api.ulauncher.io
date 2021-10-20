@@ -1,4 +1,4 @@
-bottle==0.12.16
+bottle==0.12.19
 boto3==1.9.151
 pyjwt==2.3.0
 cryptography==35.0.0
