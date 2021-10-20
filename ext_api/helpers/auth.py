@@ -30,7 +30,7 @@ def parse_token(token):
             # this is an Authorization header. Take string after space
             token = token.split(' ')[1]
 
-        return jwt.decode(token, get_signing_key(), audience=AUTH0_CLIENT_ID)
+        return jwt.decode(token, get_signing_key(), audience=AUTH0_CLIENT_ID, algorithms=['RS256'])
     except Exception as e:
         raise AuthError('Unauthorized. %s' % e)
 
