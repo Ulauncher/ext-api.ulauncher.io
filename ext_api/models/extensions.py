@@ -73,8 +73,8 @@ def remove_extension_image(id, image_idx):
 
 
 @timeit
-def get_extensions(limit=1000, sort_by='GithubStars', sort_order=-1):
-    return db.Extensions.find({'Published': True}).sort(sort_by, sort_order).limit(limit)
+def get_extensions(limit=1000, sort_by='GithubStars', sort_order=-1, offset=0):
+    return db.Extensions.find({'Published': True}).sort(sort_by, sort_order).limit(limit).skip(offset)
 
 
 @timeit

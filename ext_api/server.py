@@ -58,13 +58,19 @@ def get_extensions_route():
 
     Query params:
     * api_version: string. Version of Ulauncher Extension API. Returns all extensions by default
+    * limit: number. Default: 21
+    * offset: number
 
     """
     result = []
 
     # filter by required API version
     api_version = request.GET.get('api_version')
+    limit = request.GET.get('limit') or '21'
+    offset = request.GET.get('offset') or '0'
     try:
+        assert not offset or offset.isalnum(), "offset must be a number"
+        assert not limit or limit.isalnum(), "limit must be a number"
         sort_by = request.GET.get('sort_by') or allowed_sort_by[0]
         sort_order = request.GET.get('sort_order') or allowed_sort_order[0]
         assert sort_by in allowed_sort_by, 'allowed sorty_by: ' + ', '.join(allowed_sort_by)
@@ -72,7 +78,7 @@ def get_extensions_route():
     except AssertionError as e:
         return ErrorResponse(e, 400)
 
-    for ext in get_extensions(sort_by=sort_by, sort_order=int(sort_order)):
+    for ext in get_extensions(limit=int(limit), sort_by=sort_by, sort_order=int(sort_order), offset=int(offset)):
         if not api_version:
             result.append(ext)
         for req_version in ext.get('SupportedVersions', []):
