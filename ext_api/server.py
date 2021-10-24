@@ -126,6 +126,12 @@ def validate_project():
             commit_or_branch = get_latest_version_commit(versions)
         except JsonFileNotFoundError:
             commit_or_branch = 'master'
+        except json.JSONDecodeError as e:
+            return ErrorResponse(
+                ProjectValidationError(f'Error in versions.json: {str(e)}'),
+                400
+            )
+
         manifest = get_json(project_path, commit_or_branch, 'manifest')
         validate_manifest(manifest)
 
@@ -137,7 +143,12 @@ def validate_project():
                 'DeveloperName': manifest['developer_name'],
             }
         }
-    except (InvalidGithubUrlError, HTTPError, ProjectValidationError, AssertionError, json.JSONDecodeError) as e:
+    except json.JSONDecodeError as e:
+        return ErrorResponse(
+            ProjectValidationError(f'Error in manifest.json: {str(e)}'),
+            400
+        )
+    except (InvalidGithubUrlError, HTTPError, ProjectValidationError, AssertionError) as e:
         return ErrorResponse(e, 400)
 
 
