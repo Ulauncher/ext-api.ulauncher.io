@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 def sync_ext_versions():
     for ext in get_extensions():
         update_ext_versions(ext)
-    one_hour = 3600  # sec
-    sleep(one_hour)
 
 
 def update_ext_versions(ext):

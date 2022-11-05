@@ -12,8 +12,6 @@ logger = logging.getLogger(__name__)
 def sync_github_stars():
     for ext in get_extensions():
         update_ext_stars(ext)
-    about_one_hour = 3700
-    sleep(about_one_hour)
 
 
 def update_ext_stars(ext):
