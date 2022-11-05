@@ -17,6 +17,8 @@ Be aware that if you decided to change something and submit a PR on your own, it
     AUTH0_CLIENT_ID=<id>
     AUTH0_CLIENT_SECRET=<secret>
 
+    GUNICORN_THREADS=1
+
     EXTENSIONS_TABLE_NAME=extensions
     EXT_IMAGES_BUCKET_NAME=<bucket-name>
     MONGODB_CONNECTION=mongodb://mongodb:27017

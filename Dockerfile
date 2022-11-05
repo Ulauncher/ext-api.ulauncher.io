@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.7.15-slim
 
 MAINTAINER Aleksandr Gornostal <ulauncher.app@gmail.com>
 
@@ -15,6 +15,5 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .
-RUN ./test
 
 ENTRYPOINT [ "./bin/entrypoint.sh" ]

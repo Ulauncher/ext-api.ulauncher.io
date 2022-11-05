@@ -1,4 +1,4 @@
-bottle==0.12.16
+bottle==0.12.20
 boto3==1.9.151
 pyjwt==2.3.0
 cryptography==35.0.0
@@ -8,9 +8,4 @@ urllib3==1.25.2
 dnspython==1.15.0
 certifi==2018.8.24
 node-semver==0.6.1
-
-mock==2.0.0
-pytest==4.5.0
-pytest-mock==1.10.4
-pylint==2.3.1
-flake8==3.7.7
+gunicorn==20.1.0

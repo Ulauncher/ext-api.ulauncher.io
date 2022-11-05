@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import logging
 import json
 from itertools import cycle
@@ -358,8 +359,13 @@ class MaxImageLimitError(Exception):
 
 def run_server():
     check_migration_consistency()
+    port = os.getenv('PORT') or 8080
     if not github_api_token or not github_api_user:
         logger.warning('GITHUB_API_USER and GITHUB_API_TOKEN env vars are not set. '
                        'For unauthenticated requests, the rate limit allows for up to 60 requests per hour '
                        '(see https://developer.github.com/v3/#rate-limiting)')
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    threads = os.getenv('GUNICORN_THREADS')
+    if threads:
+        app.run(server='gunicorn', host='0.0.0.0', port=port, threads=int(threads), debug=False)
+    else:
+        app.run(host='0.0.0.0', port=port, debug=True)
