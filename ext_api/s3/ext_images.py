@@ -3,9 +3,9 @@ import datetime
 from urllib.parse import urlparse
 
 import boto3
-from ext_api.config import ext_images_bucket_name, max_image_size
+from ext_api.config import ext_images_bucket_name, max_image_size, boto3_resource_cfg, s3_use_digitalocean
 
-s3 = boto3.resource('s3')
+s3 = boto3.resource('s3', **boto3_resource_cfg)
 image_bucket = s3.Bucket(ext_images_bucket_name)
 
 
@@ -32,7 +32,8 @@ def _upload_image(user_id, fileobj):
     image_bucket.upload_fileobj(fileobj,
                                 key,
                                 ExtraArgs={'ACL': 'public-read'})
-
+    if s3_use_digitalocean:
+        return 'https://%s.nyc3.digitaloceanspaces.com/%s' % (ext_images_bucket_name, key)
     return 'https://%s.s3.amazonaws.com/%s' % (ext_images_bucket_name, key)
 
 
@@ -102,7 +103,8 @@ def validate_image_url(url):
     url = str(url)
     if not url:
         raise ImageUrlValidationError('Image URL cannot be empty')
-    if not url.startswith('https://%s.s3.amazonaws.com/' % ext_images_bucket_name):
+    if not url.startswith('https://%s.s3.amazonaws.com/' % ext_images_bucket_name) \
+            and not url.startswith('https://%s.nyc3.digitaloceanspaces.com/' % ext_images_bucket_name):
         raise ImageUrlValidationError('You cannot use external image URLs')
 
 

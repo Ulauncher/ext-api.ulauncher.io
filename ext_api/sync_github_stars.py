@@ -1,7 +1,6 @@
 import sys
 import logging
 import traceback
-from time import sleep
 
 from ext_api.models.extensions import get_extensions, update_extension
 from ext_api.github import (get_project_path, get_repo_info, ProjectNotFoundError)
