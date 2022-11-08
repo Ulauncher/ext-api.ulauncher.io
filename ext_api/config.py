@@ -3,7 +3,6 @@ import logging
 
 commit = os.getenv('COMMIT_SHA1', '')
 deployed_on = os.getenv('BUILD_DATE', '')
-extensions_table_name = os.environ['EXTENSIONS_TABLE_NAME']
 ext_images_bucket_name = os.environ['EXT_IMAGES_BUCKET_NAME']
 aws_access_key_id = os.environ['AWS_ACCESS_KEY_ID']
 aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
