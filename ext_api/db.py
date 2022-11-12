@@ -14,7 +14,7 @@ client = MongoClient(mongodb_connection)
 db = client[db_name]
 logger = logging.getLogger(__name__)
 
-__version__ = 2
+__version__ = 3
 
 
 class DbMigrationError(Exception):
