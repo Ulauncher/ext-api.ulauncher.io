@@ -29,15 +29,12 @@ def check_migration_consistency():
     for version, _ in list_migrations():
         if version > __version__:
             logger.warning('Version in db.py cannot be lower than the highest version in ./migrations')
-            sys.exit(1)
 
     db_ver = get_last_version()
     if db_ver > __version__:
         logger.warning("Version in the DB is > version in db.py. Downgrading code to previous version is not possible")
-        sys.exit(1)
     elif db_ver != __version__:
         logger.warning("Version in the DB doesn't match version in db.py. Did you forget to run migrations?")
-        sys.exit(1)
 
 
 def init_db():

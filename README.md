@@ -11,7 +11,7 @@ Be aware that if you decided to change something and submit a PR on your own, it
 
 1. Sign up for auth0.com account and create an application (see instructions below)
 1. Sign up for AWS account and create a user with limited access (see below)
-1. Create `.env` file
+1. Create `.env.local` file
     ```
     AUTH0_DOMAIN=<yourdomain>.auth0.com
     AUTH0_CLIENT_ID=<id>

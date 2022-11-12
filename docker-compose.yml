@@ -24,7 +24,7 @@ services:
     volumes:
       - .:/var/app
       - ~/.bash_history:/root/.bash_history
-    env_file: .env
+    env_file: .env.local
 
   mongodb:
     image: mongo:5
