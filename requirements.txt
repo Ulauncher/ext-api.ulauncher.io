@@ -2,7 +2,7 @@ bottle==0.12.20
 boto3==1.9.151
 pyjwt==2.3.0
 cryptography==35.0.0
-pymongo==3.6.0
+pymongo==4.3.3
 python-dateutil==2.6.1
 urllib3==1.25.2
 dnspython==1.15.0
