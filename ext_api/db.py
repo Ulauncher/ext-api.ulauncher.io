@@ -38,7 +38,7 @@ def check_migration_consistency():
 
 
 def init_db():
-    if 'Migrations' in db.collection_names():
+    if 'Migrations' in db.list_collection_names():
         db_ver = get_last_version()
         if db_ver < __version__:
             run_migrations(db_ver, __version__)
