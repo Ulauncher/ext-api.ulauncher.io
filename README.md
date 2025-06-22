@@ -28,6 +28,9 @@ Be aware that if you decided to change something and submit a PR on your own, it
     AWS_ACCESS_KEY_ID=<id>
     AWS_SECRET_ACCESS_KEY=<key>
     AWS_DEFAULT_REGION=us-east-1
+
+    COMMIT_SHA1=xxx
+    BUILD_DATE=xxx
     ```
 1. `docker network create webproxy`
 1. `docker-compose pull` (run this if you ran `docker-compose up` more than a day ago)

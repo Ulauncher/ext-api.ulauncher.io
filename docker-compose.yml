@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
 
   # ext-ui:
@@ -12,22 +10,8 @@ services:
   #   ports:
   #     - 3001:80
 
-  ext-api:
-    build: .
-    command: tail -F /none
-    entrypoint: ""
-    container_name: ext-api
-    depends_on:
-      - mongodb
-    ports:
-      - 8080:8080
-    volumes:
-      - .:/var/app
-      - ~/.bash_history:/root/.bash_history
-    env_file: .env.local
-
   mongodb:
-    image: mongo:5
+    image: mongo:8
     container_name: ext-mongodb
     restart: always
     volumes:
