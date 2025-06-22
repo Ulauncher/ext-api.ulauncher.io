@@ -5,7 +5,7 @@ import json
 from itertools import cycle
 from urllib.error import HTTPError
 from bson.json_util import dumps
-from semver import satisfies
+from nodesemver import satisfies
 from bottle import Bottle, request, response, template, FileUpload, JSONPlugin
 
 from ext_api.helpers.auth import bottle_auth_plugin, jwt_auth_required, AuthError
