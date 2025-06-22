@@ -9,4 +9,5 @@ remote_env.json
 .aws
 s3_env
 .mypy_cache/
-.venv
+.venv*
+.localstack

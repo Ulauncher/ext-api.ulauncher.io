@@ -4,7 +4,12 @@ from urllib.parse import urlparse
 
 import boto3
 
-from ext_api.config import boto3_resource_cfg, ext_images_bucket_name, max_image_size, s3_use_digitalocean
+from ext_api.config import (
+    boto3_resource_cfg,
+    ext_images_bucket_name,
+    max_image_size,
+    s3_use_digitalocean,
+)
 
 s3 = boto3.resource("s3", **boto3_resource_cfg)
 image_bucket = s3.Bucket(ext_images_bucket_name)
@@ -24,11 +29,13 @@ def upload_images(user_id, file_objects):
 
 
 def _upload_image(user_id, fileobj):
-    filename = f"{datetime.datetime.utcnow().isoformat()}.png"
+    filename = f"{datetime.datetime.now(datetime.UTC).isoformat()}.png"
     key = f"{user_id}/{filename}"
     image_bucket.upload_fileobj(fileobj, key, ExtraArgs={"ACL": "public-read"})
+
     if s3_use_digitalocean:
         return f"https://{ext_images_bucket_name}.nyc3.digitaloceanspaces.com/{key}"
+
     return f"https://{ext_images_bucket_name}.s3.amazonaws.com/{key}"
 
 

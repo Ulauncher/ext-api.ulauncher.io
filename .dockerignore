@@ -1,9 +1,0 @@
-*.pyc
-__pycache__
-.env*
-.cache
-.ignore
-.aws
-Dockerfile
-s3_env
-.venv

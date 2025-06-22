@@ -390,7 +390,7 @@ class MaxImageLimitError(Exception):
     pass
 
 
-def run_server():
+def http_server():
     check_migration_consistency()
     port = os.getenv("PORT") or 8080
     if not github_api_token or not github_api_user:

@@ -1,6 +1,6 @@
 # [API for Extensions Website](http://ext.ulauncher.io/)
 
-This API server is written in Python using bottle, boto3 libraries
+This API server is written in Python using bottle, boto3 libraries.
 
 ## Code Contribution
 
@@ -11,7 +11,7 @@ Be aware that if you decided to change something and submit a PR on your own, it
 
 1. Sign up for auth0.com account and create an application (see instructions below)
 1. Sign up for AWS account and create a user with limited access (see below)
-1. Create `.env.local` file
+1. Create `.env` file
     ```
     AUTH0_DOMAIN=<yourdomain>.auth0.com
     AUTH0_CLIENT_ID=<id>
@@ -32,12 +32,9 @@ Be aware that if you decided to change something and submit a PR on your own, it
     COMMIT_SHA1=xxx
     BUILD_DATE=xxx
     ```
-1. `docker network create webproxy`
-1. `docker-compose pull` (run this if you ran `docker-compose up` more than a day ago)
 1. `docker-compose up -d`
-1. `docker exec -it ext-api bash`
-1. `./app.py init_db`
-1. `./app.py run_server`
+1. `./app.py init_db` -- this will migrate mongodb schema
+1. `./app.py http_server`
 1. Open http://localhost:8080/api-doc.html to see API docs
 1. Open http://localhost:3000, log in with your Github user and try adding an extension to make sure everything works fine
 

@@ -32,8 +32,7 @@ test: ruff pytest # Run all tests
 ruff: # Run code style and formatting checks with ruff
 	@echo
 	@echo '[ test: ruff ]'
-	@ruff check $(TARGETS)
-	@ruff format --check $(TARGETS)
+	@ruff check $(TARGETS) && ruff format --check $(TARGETS)
 
 format: # Format code with ruff
 	@echo
