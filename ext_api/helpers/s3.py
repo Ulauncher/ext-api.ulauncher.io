@@ -8,7 +8,7 @@ def parse_s3_url(url):
     """
 
     components = urlparse(url)
-    bucket = components.netloc.split('.')[0]
-    key = components.path.strip('/')
+    bucket = components.netloc.split(".")[0]
+    key = components.path.strip("/")
 
     return (bucket, key)

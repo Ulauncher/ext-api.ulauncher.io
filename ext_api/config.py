@@ -12,7 +12,7 @@ aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
 aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 aws_default_region = os.environ["AWS_DEFAULT_REGION"]
 s3_use_digitalocean = os.environ.get("S3_USE_DIGITALOCEAN", "false").lower() == "true"
-boto3_resource_cfg = dict()
+boto3_resource_cfg = {}
 if s3_use_digitalocean:
     object_store_base_url = f"https://{aws_default_region}.digitaloceanspaces.com"
     boto3_resource_cfg = {

@@ -1,14 +1,14 @@
-import re
 import importlib
-import os
-import sys
 import logging
+import os
+import re
+import sys
 import traceback
 from datetime import datetime
+
 from pymongo import MongoClient
 
-from ext_api.config import mongodb_connection, db_name
-
+from ext_api.config import db_name, mongodb_connection
 
 client = MongoClient(mongodb_connection)
 db = client[db_name]
@@ -28,7 +28,7 @@ class MigrationsConsistencyError(Exception):
 def check_migration_consistency():
     for version, _ in list_migrations():
         if version > __version__:
-            logger.warning('Version in db.py cannot be lower than the highest version in ./migrations')
+            logger.warning("Version in db.py cannot be lower than the highest version in ./migrations")
 
     db_ver = get_last_version()
     if db_ver > __version__:
@@ -38,7 +38,7 @@ def check_migration_consistency():
 
 
 def init_db():
-    if 'Migrations' in db.list_collection_names():
+    if "Migrations" in db.list_collection_names():
         db_ver = get_last_version()
         if db_ver < __version__:
             run_migrations(db_ver, __version__)
@@ -47,7 +47,7 @@ def init_db():
             logger.info("DB schema is up-to-date")
     else:
         create_indexes()
-        db.Migrations.insert({'Version': __version__, 'CreatedAt': datetime.utcnow()})
+        db.Migrations.insert({"Version": __version__, "CreatedAt": datetime.utcnow()})
         logger.info("DB schema updated")
 
 
@@ -57,8 +57,8 @@ def list_migrations():
     """
     versions = []
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for migration in os.listdir(os.path.join(path, 'db_migrations')):
-        if re.match(r'\d+\.py$', migration):
+    for migration in os.listdir(os.path.join(path, "db_migrations")):
+        if re.match(r"\d+\.py$", migration):
             ver = int(migration[:-3])
             versions.append((ver, migration))
     versions.sort()
@@ -66,33 +66,33 @@ def list_migrations():
 
 
 def run_migrations(db_ver, code_ver):
-    logger.info('Start applying migrations')
+    logger.info("Start applying migrations")
     for ver, migration in list_migrations():
         if ver <= db_ver or ver > code_ver:
             continue
         try:
-            m = importlib.import_module('db_migrations.%s' % migration[:-3])
-            logger.info('Migrating DB to v%s...', ver)
+            m = importlib.import_module(f"db_migrations.{migration[:-3]}")
+            logger.info("Migrating DB to v%s...", ver)
             m.run_migration()
-            logger.info('Migration v%s is completed', ver)
+            logger.info("Migration v%s is completed", ver)
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
-            raise DbMigrationError(str(e))
+            raise DbMigrationError(str(e)) from e
 
 
 def get_last_version():
-    results = db.Migrations.find({}).sort('CreatedAt', -1).limit(1)
+    results = db.Migrations.find({}).sort("CreatedAt", -1).limit(1)
     for result in results:
-        return result['Version']
+        return result["Version"]
 
     return 0
 
 
 def create_indexes():
-    db.Migrations.create_index('CreatedAt')
-    db.Migrations.create_index('Version', unique=True)
+    db.Migrations.create_index("CreatedAt")
+    db.Migrations.create_index("Version", unique=True)
 
-    db.Extensions.create_index('ID', unique=True)
-    db.Extensions.create_index('User')
-    db.Extensions.create_index([('Published', 1), ('CreatedAt', -1)])
-    db.Extensions.create_index([('Published', 1), ('GithubStars', -1)])
+    db.Extensions.create_index("ID", unique=True)
+    db.Extensions.create_index("User")
+    db.Extensions.create_index([("Published", 1), ("CreatedAt", -1)])
+    db.Extensions.create_index([("Published", 1), ("GithubStars", -1)])
