@@ -1,4 +1,4 @@
-from datetime import datetime  # noqa: N999
+from datetime import datetime
 
 from ext_api.db import db
 

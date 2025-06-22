@@ -13,6 +13,7 @@ pylint = { max-args = 10}
 flake8-builtins = { builtins-ignorelist = ["id"] }
 flake8-pytest-style = {fixture-parentheses = false}
 ignore = [
+  "INP001", # Allow implicit namespace packages without __init__.py
   "A003",     # Allow using same names as python internals for class methods that doesn't shadow global scope
   "PERF203",  # Useless rule. Python 3.11 introduced "zero-cost" exception handling and there is no alternative if you want to continue iterating yet ignore errors.
   "PLC0415",  # Allow imports outside of top-level for performance reasons
