@@ -1,4 +1,5 @@
-.PHONY: all test black ruff pytest clone-prod-db upgrade-deps
+.ONESHELL:
+.PHONY: help all test format ruff pytest clone-prod-db upgrade-deps
 
 SHELL := /bin/bash
 
@@ -16,21 +17,30 @@ export DB_NAME=ext_api_dev
 
 TARGETS = db_migrations ext_api tests
 
+help: # Shows this list of available actions (targets)
+	@# Only includes targets with comments, but not if they have Commands with two ## chars
+	sed -nr \
+		-e 's|^#=(.*)|\n\1:|p' \
+		-e 's|^([a-zA-Z-]*):([^#]*?\s# (.*))| \1\x1b[35m - \3\x1b[0m|p' \
+		$(lastword $(MAKEFILE_LIST)) \
+		| expand -t20
+
 all: test
 
-test: black ruff pytest
+test: ruff pytest # Run all tests
 
-black:
-	@echo
-	@echo '[ test: black ]'
-	@black $(TARGETS)
-
-ruff:
+ruff: # Run code style and formatting checks with ruff
 	@echo
 	@echo '[ test: ruff ]'
 	@ruff check $(TARGETS)
+	@ruff format --check $(TARGETS)
 
-pytest:
+format: # Format code with ruff
+	@echo
+	@echo '[ format: ruff ]'
+	@ruff format $(TARGETS)
+
+pytest: # Run unit tests with pytest
 	@echo
 	@echo '[ test: pytest ]'
 	@py.test $(TARGETS) tests
@@ -49,7 +59,7 @@ clone-prod-db:
 		mongoimport --uri="mongodb+srv://ulauncher-local:xxx@dbhost/ext_api_dev" --collection="$$coll" --file="$$f"; \
 	done
 
-upgrade-deps:
+upgrade-deps: # Upgrade Python dependencies to the latest versions (may break compatibility)
 	@set -e; \
 	python -m venv .venv; \
 	. .venv/bin/activate; \

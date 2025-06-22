@@ -194,9 +194,9 @@ def create_extension_route():
         assert data.get("GithubUrl"), "GithubUrl cannot be empty"
         assert isinstance(data.get("Images"), list), "Images must be a list of URLs"
         max_screenshots = 5
-        assert (
-            0 < len(data["Images"]) <= max_screenshots
-        ), "You must upload at least 1 (max 5) screenshot of your extension"
+        assert 0 < len(data["Images"]) <= max_screenshots, (
+            "You must upload at least 1 (max 5) screenshot of your extension"
+        )
 
         project_path = get_project_path(data["GithubUrl"])
         info = get_repo_info(project_path)
@@ -265,9 +265,9 @@ def update_extension_route(id):
         assert data.get("DeveloperName"), "DeveloperName cannot be empty"
         assert isinstance(data.get("Images"), list), "Images must be a list of URLs"
         max_screenshots = 5
-        assert (
-            0 < len(data["Images"]) <= max_screenshots
-        ), "You must upload at least 1 (max 5) screenshot of your extension"
+        assert 0 < len(data["Images"]) <= max_screenshots, (
+            "You must upload at least 1 (max 5) screenshot of your extension"
+        )
 
         for image_url in data["Images"]:
             validate_image_url(image_url)

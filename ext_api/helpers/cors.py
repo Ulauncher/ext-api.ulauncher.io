@@ -21,7 +21,6 @@ def allow_options_requests(callback):
 
 
 def add_options_route(app):
-
     @app.route("/<url:re:.*>", method=["OPTIONS"])
     def options(_):
         return

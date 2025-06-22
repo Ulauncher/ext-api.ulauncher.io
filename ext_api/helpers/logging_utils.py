@@ -22,10 +22,8 @@ def setup_logging():
 
 
 def timeit(fn):
-
     @wraps(fn)
     def timed(*args, **kw):
-
         ts = time.time()
         result = fn(*args, **kw)
         te = time.time()

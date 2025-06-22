@@ -4,7 +4,6 @@ from bottle import HTTPResponse, response
 
 
 class ErrorResponse(HTTPResponse):
-
     def __init__(self, e, status) -> None:
         """
         :param Exception e:

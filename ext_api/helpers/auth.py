@@ -44,7 +44,6 @@ class AuthError(Exception):
 
 
 def bottle_auth_plugin(callback):
-
     def wrapper(*args, **kwargs):
         if hasattr(callback, "auth_required") and not request.get("REMOTE_USER"):
             try:
