@@ -30,7 +30,6 @@ Be aware that if you decided to change something and submit a PR on your own, it
     AWS_DEFAULT_REGION=us-east-1
 
     COMMIT_SHA1=xxx
-    BUILD_DATE=xxx
     ```
 1. `docker-compose up -d`
 1. `./app.py init_db` -- this will migrate mongodb schema

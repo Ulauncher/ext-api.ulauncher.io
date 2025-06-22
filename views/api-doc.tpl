@@ -33,8 +33,7 @@
         % if commit:
         <tr style="background-color:#CCCFDF">
             <td colspan="2">
-                Commit <i>{{ commit }}</i> <br>
-                Deployed on <i>{{ deployed_on }}</i>
+                Commit: <i>{{ commit }}</i>
             </td>
         </tr>
         % end

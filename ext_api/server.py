@@ -9,7 +9,7 @@ from bottle import Bottle, FileUpload, JSONPlugin, request, response, template
 from bson.json_util import dumps
 from nodesemver import satisfies
 
-from ext_api.config import commit, deployed_on, github_api_token, github_api_user, max_images_per_uer
+from ext_api.config import commit, github_api_token, github_api_user, max_images_per_uer
 from ext_api.db import check_migration_consistency
 from ext_api.github import (
     InvalidGithubUrlError,
@@ -68,9 +68,7 @@ def api_doc():
     docs_exclude = ["/api-doc.html", "/<url:re:.*>"]
     colors = cycle(["#fff", "#e3e4ed"])
     routes = [r for r in app.routes if r.rule not in docs_exclude]
-    return template(
-        "api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix(), commit=commit, deployed_on=deployed_on
-    )
+    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix(), commit=commit)
 
 
 @app.route("/extensions", ["GET"])
