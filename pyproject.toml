@@ -6,7 +6,7 @@ disable="all"
 
 [tool.ruff]
 line-length = 120
-target-version = "py37" # py37 is the lowest supported option
+target-version = "py313"
 
 [tool.ruff.lint]
 pylint = { max-args = 10}
