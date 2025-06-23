@@ -61,6 +61,7 @@ response.content_type = "application/json"
 allowed_sort_by = ["GithubStars", "CreatedAt"]
 allowed_sort_order = ["-1", "1"]
 HTTP_STATUS_OK = 200
+MAX_LIMIT = 1000
 
 
 @app.route("/api-doc.html", method=["GET"])
@@ -78,10 +79,9 @@ def get_extensions_route():
 
     Query params:
     * api_version: string. Version of Ulauncher Extension API. Returns all extensions by default
-
+    * offset: int. Offset for pagination (default: 0)
+    * limit: int. Limit for pagination (default: 1000)
     """
-    result = []
-
     # filter by required API version
     api_version = request.GET.get("api_version")
     try:
@@ -89,17 +89,28 @@ def get_extensions_route():
         sort_order = request.GET.get("sort_order") or allowed_sort_order[0]
         assert sort_by in allowed_sort_by, "allowed sorty_by: " + ", ".join(allowed_sort_by)
         assert sort_order in allowed_sort_order, "allowed sort_order: " + ", ".join(map(str, allowed_sort_order))
-    except AssertionError as e:
+        offset = int(request.GET.get("offset") or 0)
+        limit = int(request.GET.get("limit") or MAX_LIMIT)
+        assert offset >= 0, "offset must be >= 0"
+        assert 1 <= limit <= MAX_LIMIT, f"limit must be between 1 and {MAX_LIMIT}"
+    except (AssertionError, ValueError) as e:
         return ErrorResponse(e, 400)
 
+    all_exts = []
     for ext in get_extensions(sort_by=sort_by, sort_order=int(sort_order)):
         if not api_version:
-            result.append(ext)
-        for req_version in ext.get("SupportedVersions", []):
-            if satisfies(api_version, req_version):
-                result.append(ext)  # noqa: PERF401
+            all_exts.append(ext)
+        else:
+            for req_version in ext.get("SupportedVersions", []):
+                if satisfies(api_version, req_version):
+                    all_exts.append(ext)
+                    break
 
-    return {"data": result}
+    total = len(all_exts)
+    paged_exts = all_exts[offset : offset + limit]
+    has_more = offset + limit < total
+
+    return {"data": paged_exts, "offset": offset, "has_more": has_more}
 
 
 @app.route("/my/extensions", ["GET"])
