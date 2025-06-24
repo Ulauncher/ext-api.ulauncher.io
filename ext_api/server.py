@@ -3,14 +3,16 @@ import json
 import logging
 import os
 from itertools import cycle
+from typing import Any
 from urllib.error import HTTPError
 
-from bottle import Bottle, FileUpload, JSONPlugin, request, response, template
+from bottle import Bottle, FileUpload, JSONPlugin, request, response, template  # type: ignore
 from bson.json_util import dumps
-from nodesemver import satisfies
+from nodesemver import satisfies  # type: ignore
 
 from ext_api.config import commit, github_api_token, github_api_user, max_images_per_uer
 from ext_api.db import check_migration_consistency
+from ext_api.entities import Extension
 from ext_api.github import (
     InvalidGithubUrlError,
     JsonFileNotFoundError,
@@ -27,7 +29,7 @@ from ext_api.helpers.cors import add_options_route, allow_options_requests
 from ext_api.helpers.http_client import http
 from ext_api.helpers.logging_utils import bottle_request_logger
 from ext_api.helpers.response import ErrorResponse
-from ext_api.models.extensions import (
+from ext_api.repositories.extensions import (
     ExtensionAlreadyExistsError,
     ExtensionDoesntBelongToUserError,
     ExtensionNotFoundError,
@@ -48,10 +50,10 @@ from ext_api.s3.ext_images import (
 )
 
 app = Bottle(autojson=False)
-app.install(JSONPlugin(json_dumps=dumps))
-app.install(allow_options_requests)
-app.install(bottle_auth_plugin)
-app.install(bottle_request_logger)
+app.install(JSONPlugin(json_dumps=dumps))  # type: ignore
+app.install(allow_options_requests)  # type: ignore
+app.install(bottle_auth_plugin)  # type: ignore
+app.install(bottle_request_logger)  # type: ignore
 add_options_route(app)
 
 logger = logging.getLogger(__name__)
@@ -64,16 +66,16 @@ HTTP_STATUS_OK = 200
 MAX_LIMIT = 1000
 
 
-@app.route("/api-doc.html", method=["GET"])
-def api_doc():
+@app.route("/api-doc.html", method=["GET"])  # type: ignore
+def api_doc() -> str:
     docs_exclude = ["/api-doc.html", "/<url:re:.*>"]
     colors = cycle(["#fff", "#e3e4ed"])
-    routes = [r for r in app.routes if r.rule not in docs_exclude]
-    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix(), commit=commit)
+    routes = [r for r in app.routes if r.rule not in docs_exclude]  # type: ignore
+    return template("api-doc", colors=colors, routes=routes, url_prefix=get_url_prefix(), commit=commit)  # type: ignore
 
 
-@app.route("/extensions", ["GET"])
-def get_extensions_route():
+@app.route("/extensions", ["GET"])  # type: ignore
+def get_extensions_route() -> dict[str, Any]:
     """
     Returns all extensions
 
@@ -94,9 +96,9 @@ def get_extensions_route():
         assert offset >= 0, "offset must be >= 0"
         assert 1 <= limit <= MAX_LIMIT, f"limit must be between 1 and {MAX_LIMIT}"
     except (AssertionError, ValueError) as e:
-        return ErrorResponse(e, 400)
+        return ErrorResponse(e, 400)  # type: ignore
 
-    all_exts = []
+    all_exts: list[Extension] = []
     for ext in get_extensions(sort_by=sort_by, sort_order=int(sort_order)):
         if not api_version:
             all_exts.append(ext)
@@ -113,7 +115,7 @@ def get_extensions_route():
     return {"data": paged_exts, "offset": offset, "has_more": has_more}
 
 
-@app.route("/my/extensions", ["GET"])
+@app.route("/my/extensions", ["GET"])  # type: ignore
 @jwt_auth_required
 def get_my_extensions_route():
     """
@@ -123,18 +125,18 @@ def get_my_extensions_route():
     return {"data": get_user_extensions(user)}
 
 
-@app.route("/extensions/<id>", ["GET"])
-def get_extension_route(id):
+@app.route("/extensions/<id>", ["GET"])  # type: ignore
+def get_extension_route(id: str) -> dict[str, Any]:
     """
     Returns extension by ID
     """
     try:
         return {"data": get_extension(id)}
     except ExtensionNotFoundError as e:
-        return ErrorResponse(e, 404)
+        return ErrorResponse(e, 404)  # type: ignore
 
 
-@app.route("/validate-project", ["GET"])
+@app.route("/validate-project", ["GET"])  # type: ignore
 @jwt_auth_required
 def validate_project():
     """
@@ -177,7 +179,7 @@ def validate_project():
         return ErrorResponse(e, 400)
 
 
-@app.route("/extensions", ["POST"])
+@app.route("/extensions", ["POST"])  # type: ignore
 @jwt_auth_required
 def create_extension_route():
     """
@@ -223,18 +225,19 @@ def create_extension_route():
         for image_url in data["Images"]:
             validate_image_url(image_url)
 
-        data = put_extension(
-            User=user,
-            GithubUrl=data["GithubUrl"],
-            ProjectPath=project_path,
-            Name=data["Name"],
-            Description=data["Description"],
-            DeveloperName=data["DeveloperName"],
-            Images=data["Images"],
-            SupportedVersions=versions_only,
-            GithubStars=info["stargazers_count"],
-            Published=True,
-        )
+        ext: Extension = {
+            "User": user,
+            "GithubUrl": data["GithubUrl"],
+            "ProjectPath": project_path,
+            "Name": data["Name"],
+            "Description": data["Description"],
+            "DeveloperName": data["DeveloperName"],
+            "Images": data["Images"],
+            "SupportedVersions": versions_only,
+            "GithubStars": info["stargazers_count"],
+            "Published": True,
+        }
+        data = put_extension(ext)
     except (
         AssertionError,
         ImageUrlValidationError,
@@ -248,9 +251,9 @@ def create_extension_route():
         return {"data": data}
 
 
-@app.route("/extensions/<id>", ["PATCH"])
+@app.route("/extensions/<id>", ["PATCH"])  # type: ignore
 @jwt_auth_required
-def update_extension_route(id):
+def update_extension_route(id: str) -> dict[str, Any]:
     """
     Update extension
 
@@ -281,29 +284,31 @@ def update_extension_route(id):
         for image_url in data["Images"]:
             validate_image_url(image_url)
 
-        to_delete = set(ext["Images"]) - set(data["Images"])
+        to_delete: set[str] = set(ext["Images"]) - set(data["Images"])
         delete_images(to_delete, user)
 
         data = update_extension(
             id,
-            Name=data["Name"],
-            Description=data["Description"],
-            DeveloperName=data["DeveloperName"],
-            Images=data["Images"],
+            {
+                "Name": data["Name"],
+                "Description": data["Description"],
+                "DeveloperName": data["DeveloperName"],
+                "Images": data["Images"],
+            },
         )
     except ExtensionNotFoundError as e:
-        return ErrorResponse(e, 404)
+        return ErrorResponse(e, 404)  # type: ignore
     except (AssertionError, ImageUrlValidationError) as e:
-        return ErrorResponse(e, 400)
+        return ErrorResponse(e, 400)  # type: ignore
     except AuthError as e:
-        return ErrorResponse(e, 401)
+        return ErrorResponse(e, 401)  # type: ignore
     else:
         return {"data": data}
 
 
-@app.route("/extensions/<id>", ["DELETE"])
+@app.route("/extensions/<id>", ["DELETE"])  # type: ignore
 @jwt_auth_required
-def delete_extension_route(id):
+def delete_extension_route(id: str):
     """
     Deletes extension by ID
     """
@@ -317,18 +322,18 @@ def delete_extension_route(id):
         return ErrorResponse(e, 401)
 
 
-@app.route("/upload-images.html", ["GET"])
-def upload_images_html_route():
+@app.route("/upload-images.html", ["GET"])  # type: ignore
+def upload_images_html_route() -> str:
     """
     HTML page with an upload form for testing
 
     Query params:
     * token: (string) authorization token
     """
-    return template("image_upload", token=request.GET["token"], url_prefix=get_url_prefix())
+    return template("image_upload", token=request.GET["token"], url_prefix=get_url_prefix())  # type: ignore
 
 
-@app.route("/upload-images", ["POST"])
+@app.route("/upload-images", ["POST"])  # type: ignore
 @jwt_auth_required
 def upload_images_route():
     """
@@ -341,13 +346,13 @@ def upload_images_route():
     """
     user = request.get("REMOTE_USER")
 
-    files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]
+    files = [item.file for _, item in request.POST.items() if isinstance(item, FileUpload)]  # type: ignore
     try:
         assert files, "Files were not provided"
-        if len(list(get_user_images(user))) + len(files) > max_images_per_uer:
+        if len(list(get_user_images(user))) + len(files) > max_images_per_uer:  # type: ignore
             raise MaxImageLimitError(f"You cannot upload more than {max_images_per_uer} images")  # noqa: TRY301
 
-        urls = upload_images(user, files)
+        urls = upload_images(user, files)  # type: ignore
     except (AssertionError, MaxImageLimitError) as e:
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
@@ -356,8 +361,8 @@ def upload_images_route():
         return {"data": urls}
 
 
-@app.route("/misc/ulauncher-releases/<version>", ["GET"])
-def get_ulauncher_release(version):
+@app.route("/misc/ulauncher-releases/<version>", ["GET"])  # type: ignore
+def get_ulauncher_release(version: str):
     """
     Fetches Ulauncher release from Github by given git tag (version)
 
@@ -375,7 +380,7 @@ def get_ulauncher_release(version):
         return ErrorResponse(Exception(f"Release version {version} not found"), 404)
 
 
-def _verify_ext_auth(id):
+def _verify_ext_auth(id: str) -> Extension:
     """
     Verifies if current user can change/delete extension by given ID
 
@@ -410,6 +415,6 @@ def http_server():
         )
     threads = os.getenv("GUNICORN_THREADS")
     if threads:
-        app.run(server="gunicorn", host="0.0.0.0", port=port, threads=int(threads), debug=False)
+        app.run(server="gunicorn", host="0.0.0.0", port=port, threads=int(threads), debug=False)  # type: ignore
     else:
-        app.run(host="0.0.0.0", port=port, debug=True)
+        app.run(host="0.0.0.0", port=port, debug=True)  # type: ignore

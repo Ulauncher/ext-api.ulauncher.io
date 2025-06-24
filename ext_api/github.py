@@ -2,15 +2,17 @@ import base64
 import json
 import logging
 import re
+from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from ext_api.config import github_api_token, github_api_user
+from ext_api.entities import CompatibleVersion, Manifest, RepoInfo
 
 logger = logging.getLogger(__name__)
 
 
-def create_authenticated_request(url):
+def create_authenticated_request(url: str):
     req = Request(url)
     credentials = f"{github_api_user}:{github_api_token}"
     encoded_credentials = base64.b64encode(credentials.encode("ascii"))
@@ -18,7 +20,7 @@ def create_authenticated_request(url):
     return req
 
 
-def get_project_path(github_url):
+def get_project_path(github_url: str) -> str:
     match = re.match(r"^http(s)?:\/\/github.com\/([\w-]+\/[\w-]+)(\/)?$", github_url, re.IGNORECASE)
     if not match:
         raise InvalidGithubUrlError(f"Invalid GithubUrl: {github_url}")
@@ -29,7 +31,7 @@ def get_project_path(github_url):
 HTTP_NOT_FOUND = 404
 
 
-def get_json(repo_path, commit, blob_path):
+def get_json(repo_path: str, commit: str, blob_path: str):
     """
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
@@ -46,7 +48,7 @@ def get_json(repo_path, commit, blob_path):
     return json.load(response)
 
 
-def get_repo_info(repo_path):
+def get_repo_info(repo_path: str) -> RepoInfo:
     """
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
@@ -63,7 +65,7 @@ def get_repo_info(repo_path):
     return json.load(response)
 
 
-def validate_manifest(manifest):
+def validate_manifest(manifest: Manifest):
     try:
         assert manifest.get("name"), "name is empty"
         assert manifest.get("description"), "description is empty"
@@ -72,29 +74,29 @@ def validate_manifest(manifest):
         raise ManifestValidationError(e) from e
 
 
-def validate_versions(versions):
+def validate_versions(versions: Any) -> list[CompatibleVersion]:
     """
     versions.json example https://github.com/Ulauncher/ulauncher-demo-ext/blob/master/versions.json
     """
-    supported = []
+    supported: list[CompatibleVersion] = []
     if not isinstance(versions, list):
         msg = "Invalid versions.json format. It must be a list of objects"
         raise VersionsValidationError(msg)
 
-    for ver in versions:
+    for ver in versions:  # type: ignore
         try:
-            assert ver["required_api_version"]
-            assert ver["commit"]
+            assert ver["required_api_version"], str
+            assert ver["commit"], str
         except (KeyError, AssertionError):
             continue
-        supported.append(ver)
+        supported.append(ver)  # type: ignore
     if not supported:
         msg = "Invalid versions.json. It must define at least one supported version"
         raise VersionsValidationError(msg)
     return supported
 
 
-def get_latest_version_commit(versions):
+def get_latest_version_commit(versions: Any) -> str:
     valid_versions = validate_versions(versions)
     # TODO: it's not the best algorithm to determine the latest version, but it's good for now
     commits_by_clean_ver = {re.sub(r"[^0-9.]+", "", v["required_api_version"]): v["commit"] for v in valid_versions}

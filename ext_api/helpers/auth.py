@@ -1,9 +1,12 @@
 import os
+from collections.abc import Callable
 from functools import lru_cache
+from typing import ParamSpec, TypeVar
 
 import jwt
 from bottle import request
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509 import load_pem_x509_certificate
 
 from ext_api.helpers.http_client import http
@@ -16,7 +19,7 @@ HTTP_OK = 200
 
 
 @lru_cache(maxsize=1)
-def get_signing_key():
+def get_signing_key() -> rsa.RSAPublicKey:
     """
     get key and cache forever in memory
     """
@@ -24,10 +27,16 @@ def get_signing_key():
     if resp.status != HTTP_OK:
         raise Exception(f"Could not download auth0 cert. {resp.data}")
     cert_obj = load_pem_x509_certificate(resp.data, default_backend())
-    return cert_obj.public_key()
+    pkey = cert_obj.public_key()
+
+    if not isinstance(pkey, rsa.RSAPublicKey):
+        msg = "Auth0 public key is not an RSA key"
+        raise TypeError(msg)
+
+    return pkey
 
 
-def parse_token(token):
+def parse_token(token: str) -> dict[str, str]:
     try:
         assert token, "Token is empty"
         if " " in token:
@@ -43,11 +52,19 @@ class AuthError(Exception):
     pass
 
 
-def bottle_auth_plugin(callback):
-    def wrapper(*args, **kwargs):
-        if hasattr(callback, "auth_required") and not request.get("REMOTE_USER"):
+Param = ParamSpec("Param")
+RetType = TypeVar("RetType")
+
+
+def bottle_auth_plugin[**Param, RetType](
+    callback: Callable[Param, RetType],
+) -> Callable[Param, RetType | ErrorResponse]:
+    def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> RetType | ErrorResponse:
+        remote_user = request.get("REMOTE_USER")
+        auth_header = request.get_header("Authorization")
+        if hasattr(callback, "auth_required") and not remote_user:
             try:
-                decoded = parse_token(request.get_header("Authorization"))
+                decoded = parse_token(auth_header)
                 assert decoded["sub"]
             except AuthError as e:
                 return ErrorResponse(e, 401)
@@ -59,15 +76,15 @@ def bottle_auth_plugin(callback):
     return wrapper
 
 
-def jwt_auth_required(callable_obj):
+def jwt_auth_required[**Param, RetType](callable_obj: Callable[Param, RetType]) -> Callable[Param, RetType]:
     """A decorator that signs a callable object with an 'auth_required'
     attribute (True). We use this attribute to find which handler callbacks
-    require an authorized for protected access.
+    require an authorized user for protected access.
     Args:
         callable_obj (instance): A handler callable object.
     Returns:
         The callable object.
     """
-    callable_obj.auth_required = True
+    callable_obj.auth_required = True  # type: ignore
 
     return callable_obj

@@ -1,5 +1,6 @@
 import pytest
 
+from ext_api.entities import Manifest
 from ext_api.github import (
     InvalidGithubUrlError,
     ManifestValidationError,
@@ -24,12 +25,14 @@ def test_get_project_path__raises_invalidgithuburlerror():
 
 
 def test_validate_manifest():
-    manifest = {
-        "required_api_version": "1",
-        "name": "name",
-        "description": "description",
-        "developer_name": "developer_name",
-    }
+    manifest = Manifest(
+        {
+            "required_api_version": "1",
+            "name": "name",
+            "description": "description",
+            "developer_name": "developer_name",
+        }
+    )
 
     validate_manifest(manifest)
     with pytest.raises(ManifestValidationError):  # noqa: PT012

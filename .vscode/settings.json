@@ -9,12 +9,9 @@
         ".mypy_cache": true,
         ".pytest_cache": true
     },
-    "mypy-type-checker.ignorePatterns": [
-        "**/*.py"
-    ],
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
+    "python.analysis.typeCheckingMode": "strict",
+    "mypy-type-checker.ignorePatterns": ["**/*.py"],
+    "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
 }

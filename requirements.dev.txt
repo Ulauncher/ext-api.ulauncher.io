@@ -1,4 +1,6 @@
+boto3-stubs==1.38.42
 mock==5.2.0
+pyright==1.1.402
 pytest==8.4.1
 pytest-mock==3.14.1
 ruff==0.12.0

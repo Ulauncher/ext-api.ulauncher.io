@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 
-def parse_s3_url(url):
+def parse_s3_url(url: str) -> tuple[str, str]:
     """
     >>> parse_s3_url('https://my-bucket.s3.amazonaws.com/my/path.png')
     <<< ('my-bucket', 'my/path.png')

@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: help all test format ruff pytest clone-prod-db upgrade-deps
+.PHONY: help all test format ruff pytest clone-prod-db upgrade-deps pyright
 
 SHELL := /bin/bash
 
@@ -27,7 +27,7 @@ help: # Shows this list of available actions (targets)
 
 all: test
 
-test: ruff pytest # Run all tests
+test: ruff pyright pytest # Run all tests
 
 ruff: # Run code style and formatting checks with ruff
 	@echo
@@ -38,6 +38,11 @@ format: # Format code with ruff
 	@echo
 	@echo '[ format: ruff ]'
 	@ruff format $(TARGETS)
+
+pyright: # Run static type checking with pyright
+	@echo
+	@echo '[ type-check: pyright ]'
+	@pyright $(TARGETS)
 
 pytest: # Run unit tests with pytest
 	@echo

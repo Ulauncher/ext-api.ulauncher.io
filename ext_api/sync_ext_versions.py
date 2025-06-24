@@ -2,8 +2,9 @@ import logging
 import sys
 import traceback
 
+from ext_api.entities import Extension
 from ext_api.github import JsonFileNotFoundError, VersionsValidationError, get_json, get_project_path, validate_versions
-from ext_api.models.extensions import get_extensions, update_extension
+from ext_api.repositories.extensions import get_extensions, update_extension
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ def sync_ext_versions():
         update_ext_versions(ext)
 
 
-def update_ext_versions(ext):
+def update_ext_versions(ext: Extension):
     project_path = get_project_path(ext["GithubUrl"])
     try:
         versions = get_json(project_path, "master", "versions")
@@ -25,9 +26,9 @@ def update_ext_versions(ext):
         versions_only = []
 
     try:
-        update_extension(ext["ID"], SupportedVersions=versions_only)
+        update_extension(ext["ID"], {"SupportedVersions": versions_only})  # type: ignore
     except Exception as e:
         logger.exception(type(e).__name__)
         traceback.print_exc(file=sys.stderr)
 
-    logger.info("Extension %s is synced. SupportedVersions: %s", ext["ID"], versions_only)
+    logger.info("Extension %s is synced. SupportedVersions: %s", ext["ID"], versions_only)  # type: ignore
