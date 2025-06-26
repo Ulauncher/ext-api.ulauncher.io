@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, TypedDict
 
 from pymongo.errors import DuplicateKeyError
 
@@ -76,9 +76,35 @@ def remove_extension_image(id: str, image_idx: list[str]):
     return get_extension(id)
 
 
+class GetExtensionsResult(TypedDict):
+    data: list[Extension]
+    has_more: bool
+
+
 @timeit
-def get_extensions(limit: int = 1000, offset: int = 0, sort_by: str = "GithubStars", sort_order: int = -1):
-    return extension_collection.find({"Published": True}).sort(sort_by, sort_order).skip(offset).limit(limit)
+def get_extensions(
+    limit: None | int = 1000,
+    offset: int = 0,
+    sort_by: str = "GithubStars",
+    sort_order: int = -1,
+    versions: list[str] | None = None,
+) -> GetExtensionsResult:
+    query: dict[str, Any] = {"Published": True}
+
+    if versions:
+        query["SupportedVersions"] = {"$in": versions}
+
+    cursor = extension_collection.find(query).sort(sort_by, sort_order).skip(offset)
+
+    if limit:
+        cursor = cursor.limit(limit + 1)
+
+    found = list(cursor)
+
+    return GetExtensionsResult(
+        data=found[:limit] if limit else found,
+        has_more=len(found) > limit if limit else False,
+    )
 
 
 @timeit

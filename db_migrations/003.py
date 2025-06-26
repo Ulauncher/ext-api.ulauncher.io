@@ -14,7 +14,7 @@ def run_migration():
     extensions = extension_collection.find()
     for ext in extensions:
         images = [aws_s3_to_digitalocean_spaces(i) for i in ext.get("Images", [])]
-        extension_collection.update_one({"ID": ext["ID"]}, {"$set": {"Images": images}})  # type: ignore
+        extension_collection.update_one({"ID": ext["ID"]}, {"$set": {"Images": images}})
     migration_collection.insert({"Version": __version__, "CreatedAt": datetime.datetime.now(datetime.UTC)})
 
 

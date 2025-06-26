@@ -8,7 +8,6 @@ from urllib.error import HTTPError
 
 from bottle import Bottle, FileUpload, JSONPlugin, request, response, template  # type: ignore
 from bson.json_util import dumps
-from nodesemver import satisfies  # type: ignore
 
 from ext_api.config import commit, github_api_token, github_api_user, max_images_per_uer
 from ext_api.db import check_migration_consistency
@@ -17,11 +16,10 @@ from ext_api.github import (
     InvalidGithubUrlError,
     JsonFileNotFoundError,
     ProjectValidationError,
-    get_json,
-    get_latest_version_commit,
+    get_manifest,
     get_project_path,
     get_repo_info,
-    validate_manifest,
+    get_versions,
 )
 from ext_api.helpers.auth import AuthError, bottle_auth_plugin, jwt_auth_required
 from ext_api.helpers.aws import get_url_prefix
@@ -80,12 +78,14 @@ def get_extensions_route() -> dict[str, Any]:
     Returns all extensions
 
     Query params:
-    * api_version: string. Version of Ulauncher Extension API. Returns all extensions by default
+    * api_version: string. Version of Ulauncher Extension API.
+      Could be comma-separated list of versions.
+      Returns all extensions by default.
     * offset: int. Offset for pagination (default: 0)
     * limit: int. Limit for pagination (default: 1000)
     """
-    # filter by required API version
     api_version = request.GET.get("api_version")
+    versions: list[str] = api_version.split(",") if api_version else []
     try:
         sort_by = request.GET.get("sort_by") or allowed_sort_by[0]
         sort_order = request.GET.get("sort_order") or allowed_sort_order[0]
@@ -95,24 +95,16 @@ def get_extensions_route() -> dict[str, Any]:
         limit = int(request.GET.get("limit") or MAX_LIMIT)
         assert offset >= 0, "offset must be >= 0"
         assert 1 <= limit <= MAX_LIMIT, f"limit must be between 1 and {MAX_LIMIT}"
+        for v in versions:
+            assert v.isdigit(), "api_version must be a number"
     except (AssertionError, ValueError) as e:
         return ErrorResponse(e, 400)  # type: ignore
 
-    all_exts: list[Extension] = []
-    for ext in get_extensions(sort_by=sort_by, sort_order=int(sort_order)):
-        if not api_version:
-            all_exts.append(ext)
-        else:
-            for req_version in ext.get("SupportedVersions", []):
-                if satisfies(api_version, req_version):
-                    all_exts.append(ext)
-                    break
+    result = get_extensions(
+        offset=offset, limit=limit, sort_by=sort_by, sort_order=int(sort_order), versions=versions
+    )
 
-    total = len(all_exts)
-    paged_exts = all_exts[offset : offset + limit]
-    has_more = offset + limit < total
-
-    return {"data": paged_exts, "offset": offset, "has_more": has_more}
+    return {"data": result["data"], "offset": offset, "has_more": result["has_more"]}
 
 
 @app.route("/my/extensions", ["GET"])  # type: ignore
@@ -153,24 +145,25 @@ def validate_project():
         url = request.GET.get("url")
         assert url, 'query argument "url" cannot be empty'
         project_path = get_project_path(url)
-        get_repo_info(project_path)
+        repo_info = get_repo_info(project_path)
+
+        # get manifest.json and validate it
+        manifest = get_manifest(project_path, repo_info)
+
+        # get versions.json and validate it
         try:
-            versions = get_json(project_path, "master", "versions")
-            commit_or_branch = get_latest_version_commit(versions)
+            get_versions(project_path, repo_info)
         except JsonFileNotFoundError:
-            commit_or_branch = "master"
+            pass  # versions.json file is optional
         except json.JSONDecodeError as e:
             return ErrorResponse(ProjectValidationError(f"Error in versions.json: {e!s}"), 400)
-
-        manifest = get_json(project_path, commit_or_branch, "manifest")
-        validate_manifest(manifest)
 
         return {
             "data": {
                 "GithubUrl": url,
                 "Name": manifest["name"],
                 "Description": manifest["description"],
-                "DeveloperName": manifest["developer_name"],
+                "DeveloperName": manifest["authors"],
             }
         }
     except json.JSONDecodeError as e:
@@ -210,22 +203,24 @@ def create_extension_route():
         )
 
         project_path = get_project_path(data["GithubUrl"])
-        info = get_repo_info(project_path)
-        try:
-            versions = get_json(project_path, "master", "versions")
-            versions_only = [v["required_api_version"] for v in versions]
-            commit_or_branch = get_latest_version_commit(versions)
-        except JsonFileNotFoundError:
-            commit_or_branch = "master"
-            versions_only = ["^1.0.0"]
+        repo_info = get_repo_info(project_path)
 
-        manifest = get_json(project_path, commit_or_branch, "manifest")
-        validate_manifest(manifest)
+        # get manifest.json and validate it
+        manifest = get_manifest(project_path, repo_info)
+
+        # get versions.json and validate it
+        versions_only: list[str] = []
+        try:
+            versions = get_versions(project_path, repo_info)
+            versions_only = [v["api_version"] for v in versions["versions"]]
+        except JsonFileNotFoundError:
+            versions_only = [manifest["api_version"]]
 
         for image_url in data["Images"]:
             validate_image_url(image_url)
 
         ext: Extension = {
+            "ID": "",  # ID will be generated by put_extension
             "User": user,
             "GithubUrl": data["GithubUrl"],
             "ProjectPath": project_path,
@@ -234,7 +229,7 @@ def create_extension_route():
             "DeveloperName": data["DeveloperName"],
             "Images": data["Images"],
             "SupportedVersions": versions_only,
-            "GithubStars": info["stargazers_count"],
+            "GithubStars": repo_info["stargazers_count"],
             "Published": True,
         }
         data = put_extension(ext)

@@ -2,12 +2,12 @@ import base64
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, TypedDict
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from ext_api.config import github_api_token, github_api_user
-from ext_api.entities import CompatibleVersion, Manifest, RepoInfo
+from ext_api.entities import Manifest, RepoInfo
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,9 @@ def get_project_path(github_url: str) -> str:
 HTTP_NOT_FOUND = 404
 
 
-def get_json(repo_path: str, commit: str, blob_path: str):
+def _get_json(repo_path: str, commit: str, blob_path: str):
     """
+    Fetches {blob_path}.json from the given repo_path at the specified commit.
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
     """
@@ -50,6 +51,7 @@ def get_json(repo_path: str, commit: str, blob_path: str):
 
 def get_repo_info(repo_path: str) -> RepoInfo:
     """
+    Fetches repository information from the GitHub API.
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
     """
@@ -65,44 +67,123 @@ def get_repo_info(repo_path: str) -> RepoInfo:
     return json.load(response)
 
 
-def validate_manifest(manifest: Manifest):
-    try:
-        assert manifest.get("name"), "name is empty"
-        assert manifest.get("description"), "description is empty"
-        assert manifest.get("developer_name"), "developer_name is empty"
-    except AssertionError as e:
-        raise ManifestValidationError(e) from e
+class SupportedVersion(TypedDict):
+    api_version: str
+    commit: str
 
 
-def validate_versions(versions: Any) -> list[CompatibleVersion]:
+class ExtensionVersions(TypedDict):
+    versions: list[SupportedVersion]
+    latest_supported: str
+    commit_or_branch: str
+
+
+def _read_versions_file(versions_file_content: Any | list[dict[str, str]]) -> ExtensionVersions:
     """
     versions.json example https://github.com/Ulauncher/ulauncher-demo-ext/blob/master/versions.json
     """
-    supported: list[CompatibleVersion] = []
-    if not isinstance(versions, list):
+    valid_only: list[SupportedVersion] = []
+    if not isinstance(versions_file_content, list):
         msg = "Invalid versions.json format. It must be a list of objects"
         raise VersionsValidationError(msg)
 
-    for ver in versions:  # type: ignore
-        try:
-            assert ver["required_api_version"], str
-            assert ver["commit"], str
-        except (KeyError, AssertionError):
+    for ver in versions_file_content:  # type: ignore
+        commit = ver.get("commit")  # type: ignore
+        # read api_version and required_api_version (for backward compatibility)
+        version = ver.get("api_version") or ver.get("required_api_version")  # type: ignore
+
+        if not commit or not isinstance(version, str):
             continue
-        supported.append(ver)  # type: ignore
-    if not supported:
+
+        api_version = extract_major(version)
+
+        if not api_version:
+            continue
+
+        valid_only.append(
+            {
+                "commit": commit,
+                "api_version": api_version,
+            }
+        )
+    if not valid_only:
         msg = "Invalid versions.json. It must define at least one supported version"
         raise VersionsValidationError(msg)
-    return supported
+
+    valid_only.sort(key=lambda v: v["api_version"], reverse=True)
+    latest = valid_only[0]["api_version"]
+    commit_or_branch = valid_only[0]["commit"]
+
+    return ExtensionVersions(
+        versions=valid_only,
+        latest_supported=latest,
+        commit_or_branch=commit_or_branch,
+    )
 
 
-def get_latest_version_commit(versions: Any) -> str:
-    valid_versions = validate_versions(versions)
-    # TODO: it's not the best algorithm to determine the latest version, but it's good for now
-    commits_by_clean_ver = {re.sub(r"[^0-9.]+", "", v["required_api_version"]): v["commit"] for v in valid_versions}
-    versions = sorted(commits_by_clean_ver.keys(), reverse=True)
-    latest_ver = versions[0]
-    return commits_by_clean_ver[latest_ver]
+def get_manifest(project_path: str, repo_info: RepoInfo | None = None) -> Manifest:
+    """
+    Reads manifest.json from the given project path.
+    Example: https://github.com/Ulauncher/ulauncher-demo-ext/blob/master/manifest.json
+    Raises:
+        ManifestValidationError: If the manifest is invalid.
+        JsonFileNotFoundError: If the manifest file is not found.
+    """
+    if not repo_info:
+        repo_info = get_repo_info(project_path)
+
+    try:
+        manifest_json = _get_json(project_path, repo_info["default_branch"], "manifest")
+    except Exception as e:
+        raise ManifestValidationError(
+            f"Failed to read manifest.json from {project_path} at branch {repo_info['default_branch']}: {e}"
+        ) from e
+
+    manifest = manifest_json
+    api_version = extract_major(manifest.get("api_version") or manifest.get("required_api_version") or "")
+    name = manifest.get("name")
+    description = manifest.get("description")
+    authors = manifest.get("authors") or manifest.get("developer_name")
+
+    try:
+        assert api_version, "api_version cannot be empty and should contain a version number"
+        assert name, "name is empty"
+        assert description, "description is empty"
+        assert authors, "authors is empty"
+    except AssertionError as e:
+        raise ManifestValidationError(e) from e
+
+    return Manifest(
+        api_version=api_version,
+        name=name,
+        description=description,
+        authors=authors,
+    )
+
+
+def get_versions(project_path: str, repo_info: RepoInfo | None = None) -> ExtensionVersions:
+    """
+    Reads versions.json frm the given project path.
+    Example: https://github.com/Ulauncher/ulauncher-demo-ext/blob/master/versions.json
+    Raises:
+        VersionsValidationError: If the versions file is invalid.
+        JsonFileNotFoundError: If the versions file is not found.
+    """
+    if not repo_info:
+        repo_info = get_repo_info(project_path)
+
+    try:
+        versions_file_content = _get_json(project_path, repo_info["default_branch"], "versions")
+    except Exception as e:
+        raise VersionsValidationError(
+            f"Failed to read versions.json from {project_path} at branch {repo_info['default_branch']}: {e}"
+        ) from e
+    return _read_versions_file(versions_file_content)
+
+
+def extract_major(version: str) -> str | None:
+    match = re.match(r"^[^\d]?(\d+)", version)
+    return match.group(1) if match else None
 
 
 class InvalidGithubUrlError(Exception):

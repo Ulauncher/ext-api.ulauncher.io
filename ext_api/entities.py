@@ -3,7 +3,7 @@ from typing import NotRequired, TypedDict
 
 
 class Extension(TypedDict):
-    ID: NotRequired[str]
+    ID: str
     User: str
     GithubUrl: str
     ProjectPath: str
@@ -25,15 +25,11 @@ class Migration(TypedDict):
 
 class RepoInfo(TypedDict):
     stargazers_count: int
+    default_branch: str
 
 
-class Manifest(TypedDict, total=False):
-    required_api_version: str
+class Manifest(TypedDict):
+    api_version: str
     name: str
     description: str
-    developer_name: str
-
-
-class CompatibleVersion(TypedDict):
-    required_api_version: str
-    commit: str
+    authors: str
