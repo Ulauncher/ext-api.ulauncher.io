@@ -78,14 +78,14 @@ def get_extensions_route() -> dict[str, Any]:
     Returns all extensions
 
     Query params:
-    * api_version: string. Version of Ulauncher Extension API.
+    * versions: string. Version of Ulauncher Extension API.
       Could be comma-separated list of versions.
-      Returns all extensions by default.
+      Returns all extensions if not specified.
     * offset: int. Offset for pagination (default: 0)
     * limit: int. Limit for pagination (default: 1000)
     """
-    api_version = request.GET.get("api_version")
-    versions: list[str] = api_version.split(",") if api_version else []
+    versions_query = request.GET.get("versions")
+    versions: list[str] = versions_query.split(",") if versions_query else []
     try:
         sort_by = request.GET.get("sort_by") or allowed_sort_by[0]
         sort_order = request.GET.get("sort_order") or allowed_sort_order[0]
@@ -96,7 +96,7 @@ def get_extensions_route() -> dict[str, Any]:
         assert offset >= 0, "offset must be >= 0"
         assert 1 <= limit <= MAX_LIMIT, f"limit must be between 1 and {MAX_LIMIT}"
         for v in versions:
-            assert v.isdigit(), "api_version must be a number"
+            assert v.isdigit(), "versions must be a comma-separated list of numbers"
     except (AssertionError, ValueError) as e:
         return ErrorResponse(e, 400)  # type: ignore
 
