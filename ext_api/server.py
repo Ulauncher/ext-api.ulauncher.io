@@ -100,9 +100,7 @@ def get_extensions_route() -> dict[str, Any]:
     except (AssertionError, ValueError) as e:
         return ErrorResponse(e, 400)  # type: ignore
 
-    result = get_extensions(
-        offset=offset, limit=limit, sort_by=sort_by, sort_order=int(sort_order), versions=versions
-    )
+    result = get_extensions(offset=offset, limit=limit, sort_by=sort_by, sort_order=int(sort_order), versions=versions)
 
     return {"data": result["data"], "offset": offset, "has_more": result["has_more"]}
 
