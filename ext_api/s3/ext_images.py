@@ -9,7 +9,7 @@ from ext_api.config import (
     boto3_resource_cfg,
     ext_images_bucket_name,
     max_image_size,
-    s3_use_digitalocean,
+    s3_https_domain,
 )
 
 s3 = boto3.resource("s3", **boto3_resource_cfg)  # type: ignore
@@ -34,10 +34,7 @@ def _upload_image(user_id: str, fileobj: io.BytesIO) -> str:
     key: str = f"{user_id}/{filename}"
     image_bucket.upload_fileobj(fileobj, key, ExtraArgs={"ACL": "public-read"})  # type: ignore
 
-    if s3_use_digitalocean:
-        return f"https://{ext_images_bucket_name}.nyc3.digitaloceanspaces.com/{key}"
-
-    return f"https://{ext_images_bucket_name}.s3.amazonaws.com/{key}"
+    return f"https://{ext_images_bucket_name}{s3_https_domain}/{key}"
 
 
 def delete_image(key: str) -> None:
@@ -108,9 +105,7 @@ def validate_image_url(url: str | None) -> None:
         msg = "Image URL cannot be empty"
         raise ImageUrlValidationError(msg)
 
-    if not url.startswith(f"https://{ext_images_bucket_name}.s3.amazonaws.com/") and not url.startswith(
-        f"https://{ext_images_bucket_name}.nyc3.digitaloceanspaces.com/"
-    ):
+    if not url.startswith(f"https://{ext_images_bucket_name}{s3_https_domain}/"):
         msg = "You cannot use external image URLs"
         raise ImageUrlValidationError(msg)
 

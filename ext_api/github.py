@@ -135,9 +135,7 @@ def get_manifest(project_path: str, repo_info: RepoInfo | None = None) -> Manife
     try:
         manifest_json = _get_json(project_path, repo_info["default_branch"], "manifest")
     except Exception as e:
-        raise ManifestValidationError(
-            f"Failed to read manifest.json from {project_path} at branch {repo_info['default_branch']}: {e}"
-        ) from e
+        raise ManifestValidationError(f"manifest.json validation error: {e}") from e
 
     manifest = manifest_json
     api_version = extract_major(manifest.get("api_version") or manifest.get("required_api_version") or "")
@@ -175,9 +173,7 @@ def get_versions(project_path: str, repo_info: RepoInfo | None = None) -> Extens
     try:
         versions_file_content = _get_json(project_path, repo_info["default_branch"], "versions")
     except Exception as e:
-        raise VersionsValidationError(
-            f"Failed to read versions.json from {project_path} at branch {repo_info['default_branch']}: {e}"
-        ) from e
+        raise VersionsValidationError(f"versions.json validation error: {e}") from e
     return _read_versions_file(versions_file_content)
 
 

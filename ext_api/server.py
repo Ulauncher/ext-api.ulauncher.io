@@ -347,10 +347,13 @@ def upload_images_route():
 
         urls = upload_images(user, files)  # type: ignore
     except (AssertionError, MaxImageLimitError) as e:
+        logger.info("Failed to upload images: %s", e)
         return ErrorResponse(e, 400)
     except FileTooLargeError as e:
+        logger.info("Failed to upload images: %s", e)
         return ErrorResponse(e, 413)
     else:
+        logger.info("Uploaded images: %s", urls)
         return {"data": urls}
 
 

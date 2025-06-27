@@ -11,6 +11,13 @@ aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
 aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 aws_default_region = os.environ["AWS_DEFAULT_REGION"]
 s3_use_digitalocean = os.environ.get("S3_USE_DIGITALOCEAN", "false").lower() == "true"
+
+s3_https_domain = ".s3.amazonaws.com"
+if s3_use_digitalocean:
+    s3_https_domain = ".nyc3.digitaloceanspaces.com"
+if os.environ.get("S3_HTTPS_DOMAIN"):
+    s3_https_domain = os.environ["S3_HTTPS_DOMAIN"]
+
 boto3_resource_cfg = {}
 if s3_use_digitalocean:
     object_store_base_url = f"https://{aws_default_region}.digitaloceanspaces.com"
