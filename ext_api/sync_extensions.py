@@ -1,7 +1,6 @@
 import logging
 import sys
 import traceback
-from time import sleep
 
 from ext_api.entities import Extension, RepoInfo
 from ext_api.github import (
@@ -43,28 +42,23 @@ def update_ext_versions(ext: Extension, repo_info: RepoInfo):
 
 
 def sync_extensions():
-    while True:
-        try:
-            extensions = get_extensions()["data"]
-            total = len(extensions)
-            logger.info("Found %s extensions to sync", total)
-            i = 0
-            for ext in extensions:
-                i += 1
-                try:
-                    repo_info = get_repo_info(ext["ProjectPath"])
-                except ProjectNotFoundError:
-                    logger.warning("Project not found: %s. Unpublishing.", ext["ProjectPath"])
-                    update_extension(ext["ID"], {"Published": False})
-                    continue
+    try:
+        extensions = get_extensions()["data"]
+        total = len(extensions)
+        logger.info("Found %s extensions to sync", total)
+        i = 0
+        for ext in extensions:
+            i += 1
+            try:
+                repo_info = get_repo_info(ext["ProjectPath"])
+            except ProjectNotFoundError:
+                logger.warning("Project not found: %s. Unpublishing.", ext["ProjectPath"])
+                update_extension(ext["ID"], {"Published": False})
+                continue
 
-                logger.info("🔃 (%s/%s) Sync extension: %s", i, total, ext["ProjectPath"])
-                update_ext_stars(ext, repo_info)
-                update_ext_versions(ext, repo_info)
-        except Exception as e:
-            logger.exception(type(e).__name__)
-            traceback.print_exc(file=sys.stderr)
-
-        five_hours = 18000  # sec
-        logger.info("Wait five hours...")
-        sleep(five_hours)
+            logger.info("🔃 (%s/%s) Sync extension: %s", i, total, ext["ProjectPath"])
+            update_ext_stars(ext, repo_info)
+            update_ext_versions(ext, repo_info)
+    except Exception as e:
+        logger.exception(type(e).__name__)
+        traceback.print_exc(file=sys.stderr)
