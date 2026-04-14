@@ -132,3 +132,24 @@ def test_extensions_can_be_filtered_by_api_version(api_client: Any, auth_header:
     assert len(data) == 1
     assert data[0]["ID"] == "github-stub-owner-legacy-repo"
     assert data[0]["SupportedVersions"] == ["3"]
+
+
+def test_extensions_can_be_searched_by_project_path_and_description(
+    api_client: Any, auth_header: dict[str, str]
+) -> None:
+    _create_extension(api_client, auth_header, "https://github.com/stub-owner/stub-repo", "Stub Extension")
+    _create_extension(api_client, auth_header, "https://github.com/stub-owner/legacy-repo", "Legacy Extension")
+
+    description_response = api_client.request("GET", "/extensions?q=legacy")
+    assert description_response.status == 200
+    description_payload = api_client.parse_json(description_response)
+    description_data = cast("list[dict[str, Any]]", description_payload["data"])
+    assert len(description_data) == 1
+    assert description_data[0]["ID"] == "github-stub-owner-legacy-repo"
+
+    project_path_response = api_client.request("GET", '/extensions?q="stub-owner/stub-repo"')
+    assert project_path_response.status == 200
+    project_path_payload = api_client.parse_json(project_path_response)
+    project_path_data = cast("list[dict[str, Any]]", project_path_payload["data"])
+    assert len(project_path_data) == 1
+    assert project_path_data[0]["ID"] == "github-stub-owner-stub-repo"

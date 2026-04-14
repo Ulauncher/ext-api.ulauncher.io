@@ -88,13 +88,22 @@ def get_extensions(
     sort_by: str = "GithubStars",
     sort_order: int = -1,
     versions: list[str] | None = None,
+    search_query: str | None = None,
 ) -> GetExtensionsResult:
     query: dict[str, Any] = {"Published": True}
 
     if versions:
         query["SupportedVersions"] = {"$in": versions}
 
-    cursor = extension_collection.find(query).sort(sort_by, sort_order).skip(offset)
+    if search_query:
+        query["$text"] = {"$search": search_query}
+
+    cursor = extension_collection.find(query)
+    if search_query:
+        cursor = cursor.sort([("score", {"$meta": "textScore"}), (sort_by, sort_order)])
+    else:
+        cursor = cursor.sort(sort_by, sort_order)
+    cursor = cursor.skip(offset)
 
     if limit:
         cursor = cursor.limit(limit + 1)

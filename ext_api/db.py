@@ -18,7 +18,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 migration_collection: Collection[Migration] = db.Migrations  # type: ignore
 extension_collection: Collection[Extension] = db.Extensions  # type: ignore
 
-__version__: int = 3
+__version__: int = 4
 
 
 class DbMigrationError(Exception):
@@ -100,3 +100,4 @@ def create_indexes() -> None:
     extension_collection.create_index("User")
     extension_collection.create_index([("Published", 1), ("CreatedAt", -1)])
     extension_collection.create_index([("Published", 1), ("GithubStars", -1)])
+    extension_collection.create_index([("ProjectPath", "text"), ("Description", "text")])

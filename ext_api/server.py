@@ -78,6 +78,7 @@ def get_extensions_route() -> dict[str, Any]:
     Returns all extensions
 
     Query params:
+    * q: string. Full-text search query across project path and description.
     * versions: string. Version of Ulauncher Extension API.
       Could be comma-separated list of versions.
       Returns all extensions if not specified.
@@ -87,6 +88,10 @@ def get_extensions_route() -> dict[str, Any]:
     versions_query = request.GET.get("versions")
     versions: list[str] = versions_query.split(",") if versions_query else []
     try:
+        q = request.GET.get("q")
+        search_query = q.strip() if q is not None else None
+        if q is not None:
+            assert search_query, 'query argument "q" cannot be empty'
         sort_by = request.GET.get("sort_by") or allowed_sort_by[0]
         sort_order = request.GET.get("sort_order") or allowed_sort_order[0]
         assert sort_by in allowed_sort_by, "allowed sorty_by: " + ", ".join(allowed_sort_by)
@@ -100,7 +105,14 @@ def get_extensions_route() -> dict[str, Any]:
     except (AssertionError, ValueError) as e:
         return ErrorResponse(e, 400)  # type: ignore
 
-    result = get_extensions(offset=offset, limit=limit, sort_by=sort_by, sort_order=int(sort_order), versions=versions)
+    result = get_extensions(
+        offset=offset,
+        limit=limit,
+        sort_by=sort_by,
+        sort_order=int(sort_order),
+        versions=versions,
+        search_query=search_query,
+    )
 
     return {"data": result["data"], "offset": offset, "has_more": result["has_more"]}
 
