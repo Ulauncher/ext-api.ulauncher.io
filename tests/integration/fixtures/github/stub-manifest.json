@@ -1,0 +1,6 @@
+{
+  "api_version": "4.0.0",
+  "name": "Stub Extension",
+  "description": "Fixture manifest for integration tests",
+  "authors": "Integration Suite"
+}

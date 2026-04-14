@@ -1,0 +1,6 @@
+{
+  "api_version": "3.0.0",
+  "name": "Legacy Extension",
+  "description": "Legacy fixture manifest for integration tests",
+  "authors": "Integration Suite"
+}

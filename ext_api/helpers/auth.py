@@ -14,6 +14,7 @@ from ext_api.helpers.response import ErrorResponse
 
 AUTH0_DOMAIN = os.environ["AUTH0_DOMAIN"]
 AUTH0_CLIENT_ID = os.environ["AUTH0_CLIENT_ID"]
+AUTH0_PEM_URL = os.getenv("AUTH0_PEM_URL", f"https://{AUTH0_DOMAIN}/pem")
 
 HTTP_OK = 200
 
@@ -23,7 +24,7 @@ def get_signing_key() -> rsa.RSAPublicKey:
     """
     get key and cache forever in memory
     """
-    resp = http.request("GET", f"https://{AUTH0_DOMAIN}/pem")
+    resp = http.request("GET", AUTH0_PEM_URL)
     if resp.status != HTTP_OK:
         raise Exception(f"Could not download auth0 cert. {resp.data}")
     cert_obj = load_pem_x509_certificate(resp.data, default_backend())

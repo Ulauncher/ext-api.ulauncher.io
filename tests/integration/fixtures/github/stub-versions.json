@@ -1,0 +1,10 @@
+[
+  {
+    "api_version": "^4.0.0",
+    "commit": "main"
+  },
+  {
+    "required_api_version": "^5.0.0",
+    "commit": "main"
+  }
+]

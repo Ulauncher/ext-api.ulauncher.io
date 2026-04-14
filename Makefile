@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: help all test format ruff pytest clone-prod-db upgrade-deps pyright
+.PHONY: help all test format ruff pytest clone-prod-db upgrade-deps pyright integration integration-down
 
 SHELL := /bin/bash
 
@@ -48,6 +48,16 @@ pytest: # Run unit tests with pytest
 	@echo
 	@echo '[ test: pytest ]'
 	@py.test $(TARGETS) tests
+
+integration: # Run Podman-based integration tests in containers
+	@echo
+	@echo '[ test: integration ]'
+	@podman compose --profile integration run --build --rm integration-tests
+
+integration-down: # Stop and remove integration test containers, networks, and volumes
+	@echo
+	@echo '[ cleanup: integration ]'
+	@podman compose --profile integration down -v --remove-orphans
 
 clone-prod-db:
 	@set -ex; \

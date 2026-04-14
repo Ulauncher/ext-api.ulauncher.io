@@ -51,7 +51,7 @@ def init_db() -> None:
             logger.info("DB schema is up-to-date")
     else:
         create_indexes()
-        migration_collection.insert({"Version": __version__, "CreatedAt": datetime.datetime.now(datetime.UTC)})
+        migration_collection.insert_one({"Version": __version__, "CreatedAt": datetime.datetime.now(datetime.UTC)})
         logger.info("DB schema updated")
 
 

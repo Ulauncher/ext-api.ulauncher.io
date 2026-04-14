@@ -1,6 +1,5 @@
 import datetime
 import io
-from urllib.parse import urlparse
 
 import boto3
 from boto3.resources.collection import ResourceCollection
@@ -8,12 +7,13 @@ from boto3.resources.collection import ResourceCollection
 from ext_api.config import (
     boto3_resource_cfg,
     ext_images_bucket_name,
+    ext_images_public_base_url,
     max_image_size,
-    s3_https_domain,
 )
 
 s3 = boto3.resource("s3", **boto3_resource_cfg)  # type: ignore
 image_bucket = s3.Bucket(ext_images_bucket_name)  # type: ignore
+PATH_PARTS_COUNT = 2
 
 
 def get_user_images(user_id: str) -> ResourceCollection:
@@ -34,7 +34,7 @@ def _upload_image(user_id: str, fileobj: io.BytesIO) -> str:
     key: str = f"{user_id}/{filename}"
     image_bucket.upload_fileobj(fileobj, key, ExtraArgs={"ACL": "public-read"})  # type: ignore
 
-    return f"https://{ext_images_bucket_name}{s3_https_domain}/{key}"
+    return f"{ext_images_public_base_url.rstrip('/')}/{key}"
 
 
 def delete_image(key: str) -> None:
@@ -68,11 +68,14 @@ def parse_image_url(url: str) -> tuple[str, str, str]:
     >>> "https://dev-ulauncher-ext-image.s3.amazonaws.com/github|1202543/2017-06-23T19:09:44.447649.png"
     <<< ('dev-ulauncher-ext-image', 'github|1202543', '2017-06-23T19:09:44.447649.png')
     """
-    res = urlparse(url)
-    assert res.hostname, "Invalid URL: hostname is empty"
-    bucket_name = res.hostname.split(".")[0]
-    user_id = res.path.split("/")[1]
-    filename = res.path.split("/")[2]
+    prefix = f"{ext_images_public_base_url.rstrip('/')}/"
+    assert url.startswith(prefix), "Invalid URL: image URL does not use the configured bucket base URL"
+    path = url[len(prefix) :]
+    path_parts = path.split("/", 1)
+    assert len(path_parts) == PATH_PARTS_COUNT, "Invalid URL: object path is incomplete"
+    user_id = path_parts[0]
+    filename = path_parts[1]
+    bucket_name = ext_images_bucket_name
     return (bucket_name, user_id, filename)
 
 
@@ -105,7 +108,7 @@ def validate_image_url(url: str | None) -> None:
         msg = "Image URL cannot be empty"
         raise ImageUrlValidationError(msg)
 
-    if not url.startswith(f"https://{ext_images_bucket_name}{s3_https_domain}/"):
+    if not url.startswith(f"{ext_images_public_base_url.rstrip('/')}/"):
         msg = "You cannot use external image URLs"
         raise ImageUrlValidationError(msg)
 

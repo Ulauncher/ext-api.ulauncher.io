@@ -1,0 +1,10 @@
+.git
+.db
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.venv
+.vscode
+__pycache__
+*.pyc
+localstack

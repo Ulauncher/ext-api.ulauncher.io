@@ -17,3 +17,94 @@ services:
     volumes:
       - ./.db/mongo/db:/data/db
       - ./.db/mongo/configdb:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "mongodb://localhost:27017/admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: docker.io/minio/minio:latest
+    profiles: ["integration"]
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    tmpfs:
+      - /data
+
+  integration-stub:
+    build:
+      context: .
+      dockerfile: Containerfile
+    profiles: ["integration"]
+    command: ["python", "tests/integration/stub_server.py"]
+    environment:
+      STUB_HOST: 0.0.0.0
+      STUB_PORT: "18080"
+
+  api:
+    build:
+      context: .
+      dockerfile: Containerfile
+    profiles: ["integration"]
+    command: ["bash", "-lc", "./app.py init_db && ./app.py http_server"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      integration-stub:
+        condition: service_started
+    environment:
+      AUTH0_DOMAIN: integration.example.test
+      AUTH0_CLIENT_ID: integration-client
+      AUTH0_CLIENT_SECRET: integration-secret
+      AUTH0_PEM_URL: http://integration-stub:18080/pem
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+      DB_NAME: ext_api_integration
+      EXT_IMAGES_BUCKET_NAME: itest-ext-images
+      GITHUB_API_BASE_URL: http://integration-stub:18080
+      GITHUB_RAW_BASE_URL: http://integration-stub:18080/raw
+      GUNICORN_THREADS: "2"
+      MONGODB_CONNECTION: mongodb://mongodb:27017/
+      PYTHONPATH: /app
+      S3_ADDRESSING_STYLE: path
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_BASE_URL: http://minio:9000/itest-ext-images
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/extensions').read()\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Containerfile
+    profiles: ["integration"]
+    command: ["pytest", "-q", "tests/integration"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      integration-stub:
+        condition: service_started
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://api:8080
+      AUTH0_CLIENT_ID: integration-client
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      DB_NAME: ext_api_integration
+      EXT_IMAGES_BUCKET_NAME: itest-ext-images
+      MONGODB_CONNECTION: mongodb://mongodb:27017/
+      RUN_INTEGRATION: "1"
+      S3_ADDRESSING_STYLE: path
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_BASE_URL: http://minio:9000/itest-ext-images

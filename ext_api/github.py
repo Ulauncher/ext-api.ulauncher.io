@@ -4,9 +4,10 @@ import logging
 import re
 from typing import Any, TypedDict
 from urllib.error import HTTPError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from ext_api.config import github_api_token, github_api_user
+from ext_api.config import github_api_base_url, github_api_token, github_api_user, github_raw_base_url
 from ext_api.entities import Manifest, RepoInfo
 
 logger = logging.getLogger(__name__)
@@ -14,9 +15,10 @@ logger = logging.getLogger(__name__)
 
 def create_authenticated_request(url: str):
     req = Request(url)
-    credentials = f"{github_api_user}:{github_api_token}"
-    encoded_credentials = base64.b64encode(credentials.encode("ascii"))
-    req.add_header("Authorization", "Basic {}".format(encoded_credentials.decode("ascii")))
+    if github_api_user and github_api_token:
+        credentials = f"{github_api_user}:{github_api_token}"
+        encoded_credentials = base64.b64encode(credentials.encode("ascii"))
+        req.add_header("Authorization", f"Basic {encoded_credentials.decode('ascii')}")
     return req
 
 
@@ -37,7 +39,13 @@ def _get_json(repo_path: str, commit: str, blob_path: str):
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
     """
-    url = f"https://raw.githubusercontent.com/{repo_path}/{commit}/{blob_path}.json"
+    if github_raw_base_url.rstrip("/") == "https://raw.githubusercontent.com":
+        url = f"{github_raw_base_url.rstrip('/')}/{repo_path}/{commit}/{blob_path}.json"
+    else:
+        repo_path_quoted = quote(repo_path, safe="/")
+        commit_quoted = quote(commit, safe="")
+        blob_path_quoted = quote(f"{blob_path}.json", safe="")
+        url = f"{github_raw_base_url.rstrip('/')}/{repo_path_quoted}/{commit_quoted}/{blob_path_quoted}"
     req = create_authenticated_request(url)
     try:
         response = urlopen(req)
@@ -55,7 +63,7 @@ def get_repo_info(repo_path: str) -> RepoInfo:
     Raises urllib.error.HTTPError
     Raises ProjectValidationError
     """
-    url = f"https://api.github.com/repos/{repo_path}"
+    url = f"{github_api_base_url.rstrip('/')}/repos/{quote(repo_path, safe='/')}"
     req = create_authenticated_request(url)
     try:
         response = urlopen(req)

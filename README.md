@@ -39,6 +39,16 @@ Be aware that if you decided to change something and submit a PR on your own, it
 
 In order to access Mongodb run `docker exec -it ext-mongodb mongo ulauncher`
 
+# Integration Tests
+
+The repository includes a rootless Podman Compose integration suite that starts MongoDB, MinIO, a local Auth/GitHub stub, and the API in containers.
+
+1. Start the user Podman socket once: `systemctl --user enable --now podman.socket`
+1. Run the suite: `make integration`
+1. Remove integration containers and volumes after debugging: `make integration-down`
+
+The integration tests live in `tests/integration/` and are skipped during normal host-side `pytest` runs unless `RUN_INTEGRATION=1` is set by the container runner.
+
 # How to Create Auth0 Application
 
 1. After you sign up for auth0 account, click large button Create Application
