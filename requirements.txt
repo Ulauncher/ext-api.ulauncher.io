@@ -8,6 +8,6 @@ mypy-boto3-s3==1.38.39
 PyJWT==2.10.1
 pymongo==4.13.2
 python-dateutil==2.9.0.post0
-python-dotenv==1.1.1
+python-dotenv==1.2.2
 types-boto3-s3==1.38.39
 urllib3==2.6.3
