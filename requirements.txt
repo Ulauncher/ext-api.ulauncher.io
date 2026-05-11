@@ -10,4 +10,4 @@ pymongo==4.13.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 types-boto3-s3==1.38.39
-urllib3==2.6.3
+urllib3==2.7.0
